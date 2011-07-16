@@ -1,15 +1,13 @@
 
-
 /**
  * Represents an order to be issued.
  */
 public class Order {
+
     private final int row;
-    
     private final int col;
-    
     private final char direction;
-    
+
     /**
      * Creates new {@link Order} object.
      * 
@@ -21,12 +19,16 @@ public class Order {
         col = tile.getCol();
         this.direction = direction.getSymbol();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
     public String toString() {
         return "o " + row + " " + col + " " + direction;
+    }
+
+    void cancel() {
+        OrderManager.cancel(this);
     }
 }

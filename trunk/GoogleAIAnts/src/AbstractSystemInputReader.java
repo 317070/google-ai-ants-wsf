@@ -1,11 +1,11 @@
 
-
 import java.io.IOException;
 
 /**
  * Handles system input stream reading.
  */
 public abstract class AbstractSystemInputReader {
+
     /**
      * Reads system input stream line by line. All characters are converted to lower case and each
      * line is passed for processing to {@link #processLine(String)} method.
@@ -20,11 +20,11 @@ public abstract class AbstractSystemInputReader {
                 processLine(line.toString().toLowerCase().trim());
                 line.setLength(0);
             } else {
-                line = line.append((char)c);
+                line = line.append((char) c);
             }
         }
     }
-    
+
     /**
      * Process a line read out by {@link #readSystemInput()} method in a way defined by subclass
      * implementation.
