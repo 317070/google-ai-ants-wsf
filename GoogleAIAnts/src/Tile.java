@@ -47,6 +47,7 @@ public class Tile {
 
     /**
      * {@inheritDoc}
+     * @param o 
      */
     @Override
     public boolean equals(Object o) {

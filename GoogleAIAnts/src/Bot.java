@@ -16,6 +16,10 @@ public abstract class Bot extends AbstractSystemInputParser {
             spawnRadius2));
     }
     
+    /**
+     * 
+     * @param ants
+     */
     protected void setAnts(Ants ants) {
         this.ants = ants;
     }

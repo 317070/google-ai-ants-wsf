@@ -10,6 +10,23 @@
 <project name="GoogleAIAnts" default="default" basedir=".">
     <description>Builds, tests, and runs the project GoogleAIAnts.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <condition property="iswindows">
+        <os family="windows"/>
+    </condition>
+
+    <target name="run" depends="GoogleAIAnts-impl.jar, windows.init, others.init"/>
+    <target name="windows.init" if="iswindows">
+        <exec dir="tools" executable="cmd" os="Windows 7">
+            <arg value="/C"/>
+            <arg value="play_one_game.cmd"/>
+        </exec>
+    </target>
+    <target name="others.init" unless="iswindows">
+        <exec dir="tools" executable="bash" os="linux">
+            <arg value="play_one_game.sh"/>
+        </exec>
+    </target>
     <!--
 
     There exist several targets which are by default empty and which can be 
