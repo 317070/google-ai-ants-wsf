@@ -1,34 +1,33 @@
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Pattern; 
+import java.util.regex.Pattern;
 
 /**
  * Handles system input stream parsing.
  */
 public abstract class AbstractSystemInputParser extends AbstractSystemInputReader {
+
     private static final String READY = "ready";
-    
     private static final String GO = "go";
-    
     private static final char COMMENT_CHAR = '#';
-    
     private final List<String> input = new ArrayList<String>();
     
+    static int currentturn;
+
     private enum SetupToken {
+
         LOADTIME, TURNTIME, ROWS, COLS, TURNS, VIEWRADIUS2, ATTACKRADIUS2, SPAWNRADIUS2;
-        
         private static final Pattern PATTERN = compilePattern(SetupToken.class);
     }
-    
+
     private enum UpdateToken {
+
         W, A, F, D, R;
-        
         private static final Pattern PATTERN = compilePattern(UpdateToken.class);
     }
-    
+
     @SuppressWarnings("rawtypes")
     private static final Pattern compilePattern(Class<? extends Enum> clazz) {
         StringBuilder builder = new StringBuilder("(");
@@ -41,7 +40,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
         builder.append(")");
         return Pattern.compile(builder.toString());
     }
-    
+
     /**
      * Collects lines read from system input stream until a keyword appears and then parses them.
      */
@@ -61,7 +60,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
             input.add(line);
         }
     }
-    
+
     /**
      * Parses the setup information from system input stream.
      * 
@@ -93,32 +92,33 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
             switch (setupToken) {
                 case LOADTIME:
                     loadTime = scanner.nextInt();
-                break;
+                    break;
                 case TURNTIME:
                     turnTime = scanner.nextInt();
-                break;
+                    break;
                 case ROWS:
                     rows = scanner.nextInt();
-                break;
+                    break;
                 case COLS:
                     cols = scanner.nextInt();
-                break;
+                    break;
                 case TURNS:
                     turns = scanner.nextInt();
-                break;
+                    break;
                 case VIEWRADIUS2:
                     viewRadius2 = scanner.nextInt();
-                break;
+                    break;
                 case ATTACKRADIUS2:
                     attackRadius2 = scanner.nextInt();
-                break;
+                    break;
                 case SPAWNRADIUS2:
                     spawnRadius2 = scanner.nextInt();
-                break;
+                    break;
             }
         }
-        setup(loadTime, turnTime, rows, cols, turns, viewRadius2, attackRadius2,
+        GameParam.setup(loadTime, turnTime, rows, cols, turns, viewRadius2, attackRadius2,
                 spawnRadius2);
+        GameData.init();
     }
 
     /**
@@ -133,11 +133,15 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
             if (line.isEmpty()) {
                 continue;
             }
+            if(line.indexOf("turn")==0){
+                String[] spl = line.split(" ");
+                currentturn = Integer.parseInt(spl[spl.length-1]);
+            }
             Scanner scanner = new Scanner(line);
             if (!scanner.hasNext()) {
                 continue;
             }
-            String token = scanner.next().toUpperCase();
+            String token = scanner.next().toUpperCase();            
             if (!UpdateToken.PATTERN.matcher(token).matches()) {
                 continue;
             }
@@ -147,48 +151,33 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
             switch (updateToken) {
                 case W:
                     addWater(row, col);
-                break;
+                    break;
                 case A:
                     addAnt(row, col, scanner.nextInt());
-                break;
+                    break;
                 case F:
                     addFood(row, col);
-                break;
+                    break;
                 case D:
                     // avoid crashing if the engine sends None as player ID
                     if (scanner.hasNextInt()) {
                         removeAnt(row, col, scanner.nextInt());
                     }
-                break;
+                    break;
                 case R:
                     removeFood(row, col);
-                break;
+                    break;
             }
         }
         afterUpdate();
     }
 
     /**
-     * Sets up the game state.
-     * 
-     * @param loadTime timeout for initializing and setting up the bot on turn 0
-     * @param turnTime timeout for a single game turn, starting with turn 1
-     * @param rows game map height
-     * @param cols game map width
-     * @param turns maximum number of turns the game will be played
-     * @param viewRadius2 squared view radius of each ant
-     * @param attackRadius2 squared attack radius of each ant
-     * @param spawnRadius2 squared spawn radius of each ant
-     */
-    public abstract void setup(int loadTime, int turnTime, int rows, int cols, int turns,
-            int viewRadius2, int attackRadius2, int spawnRadius2);
-
-    /**
      * Enables performing actions which should take place prior to updating the game state, like
      * clearing old game data.
      */
     public abstract void beforeUpdate();
-    
+
     /**
      * Adds new water tile.
      * 
@@ -196,7 +185,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param col column index
      */
     public abstract void addWater(int row, int col);
-    
+
     /**
      * Adds new ant tile.
      * 
@@ -205,7 +194,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param owner player id
      */
     public abstract void addAnt(int row, int col, int owner);
-    
+
     /**
      * Adds new food tile.
      * 
@@ -213,7 +202,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param col column index
      */
     public abstract void addFood(int row, int col);
-    
+
     /**
      * Removes dead ant tile.
      * 
@@ -222,7 +211,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param owner player id
      */
     public abstract void removeAnt(int row, int col, int owner);
-    
+
     /**
      * Removes food tile.
      * 
@@ -230,26 +219,28 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param col column index
      */
     public abstract void removeFood(int row, int col);
-    
+
     /**
      * Enables performing actions which should take place just after the game state has been
      * updated.
      */
     public abstract void afterUpdate();
-    
+
     /**
      * Subclasses are supposed to use this method to process the game state and send orders.
      */
     public abstract void doTurn();
-    
+
     /**
      * Finishes turn.
      */
     public void finishTurn() {
-        System.out.println("go");
-        System.out.flush();
+        for(Ant ant:GameData.getMyAnts()){
+            ant.update();
+        }
+        OrderManager.issueAllOrders();
     }
-    
+
     private String removeComment(String line) {
         int commentCharIndex = line.indexOf(COMMENT_CHAR);
         String lineWithoutComment;
