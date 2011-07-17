@@ -23,6 +23,8 @@ public class MyBot extends Bot {
         } catch (Exception e) {
             Logger.log(e);
         }
+        Logger.log("ties gedaan");
+        Logger.close();
     }
 
     /**

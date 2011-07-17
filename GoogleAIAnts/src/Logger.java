@@ -39,7 +39,6 @@ class Logger {
             res += "]=";
             res += str + "\n";
             out.write(res);
-            out.flush();
         } catch (IOException e) {
         }
     }
@@ -53,6 +52,7 @@ class Logger {
 
     static void close() {
         try {
+            out.flush();
             out.close();
         } catch (IOException ex) {
         }
@@ -67,5 +67,13 @@ class Logger {
 
     static void log(int cost) {
         log("" + cost);
+    }
+    
+    static void flush(){
+        try {
+            out.flush();
+        } catch (IOException ex) {
+            Logger.log(ex);
+        }
     }
 }

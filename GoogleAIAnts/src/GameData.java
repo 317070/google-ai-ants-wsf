@@ -102,14 +102,12 @@ public class GameData {
             }
         }
         for(Ant ant:myants){
-            for(Tile t:ant.getTile().getTilesUnderAWalkingDistance(GameParam.viewRadius2)){
+            for(Tile t:ant.getTile().getTilesUnderAViewingDistance(GameParam.viewRadius2)){
                 see.set(t, true);
                 explored.set(t, true);
             }
         }
-    }
-    
-    
+    }   
     
     static void removeFood(Tile tile) {
         if (world.get(tile) == Ilk.FOOD) {
