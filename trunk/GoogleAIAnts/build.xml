@@ -15,7 +15,13 @@
         <os family="windows"/>
     </condition>
 
-    <target name="run" depends="GoogleAIAnts-impl.jar, zip.upload, windows.run, others.run"/>
+    <target name="run" depends="GoogleAIAnts-impl.jar, create.new.log, zip.upload, windows.run, others.run"/>
+    <target name="create.new.log">
+        <delete file = "dist/MyLog.txt"/>
+        <touch file = "dist/MyLog.txt" mkdirs="true"/>
+        <echo file="dist/MyLog.txt">Hello Jim!</echo> 
+    </target>
+    
     <target name="zip.upload">
         <zip destfile="dist/upload.zip" basedir="src"/>
     </target>
