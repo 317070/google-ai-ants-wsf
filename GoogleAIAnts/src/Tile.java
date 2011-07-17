@@ -131,11 +131,31 @@ public class Tile {
             return Aim.WEST;
         throw new RuntimeException("Tile "+this+" doesn't share an edge with "+nextTile);
     }
+
+    //waterfill algoritme voor alle punten binnen een cirkel
+    public List<Tile> getTilesUnderAViewingDistance(int dist2){
+        ArrayList<Tile> result = new ArrayList<Tile>();
+        ArrayList<Tile> pos = new ArrayList<Tile>();
+        HashSet<Tile> done = new HashSet<Tile>();
+        done.add(this);
+        pos.add(this);
+        while(!pos.isEmpty()){
+            if(pos.get(0).getDistanceTo(this)<=dist2){
+                result.add(pos.get(0));
+                List<Tile> newpos = pos.get(0).getBorderingTiles();
+                newpos.removeAll(done);
+                done.addAll(newpos);
+                pos.addAll(newpos);
+            }
+            pos.remove(0);
+        }
+        return result;
+    }
     
-    public List<Tile> getTilesUnderADistance(int dist){
+    public List<Tile> getTilesUnderAWalkingDistance(int dist){
         ArrayList<Tile> result = new ArrayList<Tile>();
         for(int i=1; i<=dist;i++){
-            result.addAll(this.getTilesAtADistance(i));
+            result.addAll(this.getTilesAtAWalkingDistance(i));
         }
         return result;
     }
@@ -147,7 +167,7 @@ public class Tile {
      * @param dist
      * @return List of tiles
      */
-    public List<Tile> getTilesAtADistance(int dist){
+    public List<Tile> getTilesAtAWalkingDistance(int dist){
         ArrayList<Tile> result = new ArrayList<Tile>();
         if(dist==0){
             result.add(this);

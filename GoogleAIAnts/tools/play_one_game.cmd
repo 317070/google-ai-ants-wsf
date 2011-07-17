@@ -2,7 +2,7 @@
 ::test
 :: playgame.py --player_seed 42 --end_wait=0.25 --verbose --log_dir game_logs --food=random --turns 100 --map_file maps\test_maps\testmap.map %* "java -jar ../dist/GoogleAIAnts.jar" "python sample_bots\python\HunterBot.py"
 ::game
-playgame.py --player_seed 42 --end_wait=0.25 --verbose --log_dir game_logs --turns 1000 --map_file maps\symmetric_maps\symmetric_10.map %* "java -jar ../dist/GoogleAIAnts.jar" "python sample_bots\python\LeftyBot.py" "python sample_bots\python\HunterBot.py" "python sample_bots\python\GreedyBot.py"
+playgame.py --player_seed 42 --end_wait=0.25 --verbose --log_dir game_logs --turns 1000 --map_file maps\symmetric_maps\symmetric_10.map %* "java -jar ../dist/GoogleAIAnts.jar" "java -jar sample_bots/WSF/17juli.jar" "python sample_bots\python\HunterBot.py" "python sample_bots\python\GreedyBot.py"
 
 ::comments
 

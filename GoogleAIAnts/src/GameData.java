@@ -90,7 +90,26 @@ public class GameData {
         }
         myants = new ArrayList<Ant>(found);
         found.clear();
+        Timer.tic();
+        updateVisibility();
+        Logger.log("it took "+Timer.toc()+"ms to update visibility");
     }
+
+    private static void updateVisibility() {
+        for(int i=0;i<GameParam.rows;i++){
+            for(int j=0;j<GameParam.cols;j++){
+                see.set(i,j, false);
+            }
+        }
+        for(Ant ant:myants){
+            for(Tile t:ant.getTile().getTilesUnderAWalkingDistance(GameParam.viewRadius2)){
+                see.set(t, true);
+                explored.set(t, true);
+            }
+        }
+    }
+    
+    
     
     static void removeFood(Tile tile) {
         if (world.get(tile) == Ilk.FOOD) {
@@ -129,5 +148,11 @@ public class GameData {
         if(world.get(tile)==null)return true;//if we don't know, let's assume we can pass
         return world.get(tile).isPassable();
     }
-    
+
+    static boolean isVisible(Tile goal) {
+        return see.get(goal);
+    }
+    static boolean isExplored(Tile goal) {
+        return explored.get(goal);
+    }
 }

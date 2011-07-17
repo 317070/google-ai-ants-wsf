@@ -38,7 +38,7 @@ public class MyBot extends Bot {
         HashMap<Ant,List<Tile>> missions = new HashMap<Ant,List<Tile>>();
         HashSet<Tile> checked = new HashSet<Tile>();
         for (Ant myAnt : GameData.getMyBusyAnts()) {
-            List<Tile> goals = myAnt.getTile().getTilesUnderADistance(10);
+            List<Tile> goals = myAnt.getTile().getTilesUnderAWalkingDistance(10);
             length = goals.size(); // zijn toch allemaal even groot
             missions.put(myAnt, goals);
         }
@@ -59,16 +59,14 @@ public class MyBot extends Bot {
                         }
                     }
                     if(free){
-                        Logger.log("is a plan");
                         //sounds like a plan :D
                         Path sp = myAnt.getTile().shortestPath(goal);
                         if(sp==null)continue; //er bestaat geen pad
-                        Logger.log(sp.getDistance());
                         sp = sp.withoutLastTile();
                         myAnt.setPath(sp);
                         taken.add(goal);
                     }
-                }else if(ilk==Ilk.ENEMY_ANT){
+                }else if(ilk==Ilk.ENEMY_ANT && GameData.isVisible(goal)){
                     Path sp = myAnt.getTile().shortestPath(goal);
                     if(sp==null)continue; //er bestaat geen pad
                     myAnt.setPath(sp);

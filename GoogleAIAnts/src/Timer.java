@@ -14,4 +14,12 @@ class Timer {
     static int getTimeLeft() {
         return (int) (GameParam.TIMEPERTURN - System.currentTimeMillis() + start);
     }
+    
+    private static int tic = 0;
+    static void tic(){
+        tic = getTime();
+    }
+    static int toc(){
+        return getTime()-tic;
+    }
 }
