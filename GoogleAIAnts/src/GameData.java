@@ -60,7 +60,6 @@ public class GameData {
                 boolean OK = false;
                 for(Ant ant: myants){
                     if(ant.getTile().equals(tile)){
-                        Logger.log("Found ant back at "+tile);
                         found.add(ant);//make sure it is the same ant, so it keeps its memory
                         OK = true;
                         break;
@@ -104,6 +103,16 @@ public class GameData {
         return new ArrayList<Ant>(myants);
     }
 
+    static List<Ant> getMyBusyAnts(){
+        ArrayList<Ant> result = new ArrayList<Ant>();
+        for(Ant a:myants){
+            if(!a.isBusy()){
+                result.add(a);
+            }
+        }
+        return result;
+    }
+    
     static List<Tile> getEnemyAnts() {
         return new ArrayList<Tile>(enemyants);
     }

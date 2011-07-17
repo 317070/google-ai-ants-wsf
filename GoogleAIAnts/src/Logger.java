@@ -11,7 +11,7 @@ class Logger {
 
     private static BufferedWriter out;
     private static boolean logging = true;
-    private static final String LOGFILE = "../MyLog.txt";
+    private static final String LOGFILE = "MyLog.txt";
 
     static void log(String str) {
         if (!logging) {

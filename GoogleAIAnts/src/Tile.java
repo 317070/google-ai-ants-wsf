@@ -182,16 +182,18 @@ public class Tile {
         IntPath start = new IntPath(this.getManhattenDistanceTo(to), p);
         memory.add(start);
         while(true){
+            if(memory.isEmpty()){
+                return null;
+            }
             Path shortest = memory.get(0).path;
             memory.remove(0);
-            List<Tile> borders = shortest.getLastTile().getBorderingTiles();
+            List<Tile> borders = shortest.getLastTile().getPassableBorderingTiles();
             borders.removeAll(beenthere);
             Collections.shuffle(borders);
             for(Tile b:borders){
-                if(!GameData.isPassable(b))
-                    continue;
                 Path newpath = shortest.push(b);
                 if(b.equals(to)){
+                    Logger.log( "memory:"+memory.size());
                     return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
                 }
                 int estimatedtotaldistance = newpath.getDistance() + b.getManhattenDistanceTo(to);
@@ -220,12 +222,23 @@ public class Tile {
         }
     }
 
-    public List<Tile> getBorderingTiles() {
+    public ArrayList<Tile> getBorderingTiles() {
         ArrayList<Tile> result = new ArrayList<Tile>();
         result.add(new Tile(this.row+1,this.col));
         result.add(new Tile(this.row,this.col+1));
         result.add(new Tile(this.row-1,this.col));
         result.add(new Tile(this.row,this.col-1));
+        return result;
+    }
+    public List<Tile> getPassableBorderingTiles() {
+        ArrayList<Tile> result = getBorderingTiles();
+        HashSet<Tile> rem = new HashSet<Tile>();
+        for(Tile t:result){
+            if(!GameData.isPassable(t)){
+                rem.add(t);
+            }
+        }
+        result.removeAll(rem);
         return result;
     }
     

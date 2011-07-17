@@ -17,10 +17,8 @@ public class OrderManager {
         //TODO: do some checks to remove stupid mistakes, like 2 ants going to 1 tile
         for(Order ord:orders){
             System.out.println(ord);
-            Logger.log("order: " +ord);
         }
         System.out.println("go");
-        Logger.log("order: go");
         System.out.flush();
         orders.clear();
     }
