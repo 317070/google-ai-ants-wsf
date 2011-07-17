@@ -131,23 +131,19 @@ public class Tile {
             return Aim.WEST;
         throw new RuntimeException("Tile "+this+" doesn't share an edge with "+nextTile);
     }
-
+    //vroeger was dit een
     //waterfill algoritme voor alle punten binnen een cirkel
+    //maar dit blijkt 7x sneller te zijn.
     public List<Tile> getTilesUnderAViewingDistance(int dist2){
-        ArrayList<Tile> result = new ArrayList<Tile>();
-        ArrayList<Tile> pos = new ArrayList<Tile>();
-        HashSet<Tile> done = new HashSet<Tile>();
-        done.add(this);
-        pos.add(this);
-        while(!pos.isEmpty()){
-            if(pos.get(0).getDistanceTo(this)<=dist2){
-                result.add(pos.get(0));
-                List<Tile> newpos = pos.get(0).getBorderingTiles();
-                newpos.removeAll(done);
-                done.addAll(newpos);
-                pos.addAll(newpos);
+        int r = (int) (Math.sqrt(dist2) + 0.5);//straal van de cirkel
+        ArrayList<Tile>result = new ArrayList<Tile>();
+        for(int i=-r;i<=r;i++){
+            for(int j=-r; j<=r;j++){
+                Tile t = new Tile(this.row+i,this.col+j);
+                if(this.getDistanceTo(t)<=dist2){
+                    result.add(t);
+                }
             }
-            pos.remove(0);
         }
         return result;
     }
