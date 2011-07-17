@@ -18,6 +18,7 @@ public class MyBot extends Bot {
      */
     public static void main(String[] args) throws IOException {
         try {
+            Logger.log("start");
             new MyBot().readSystemInput();
         } catch (Exception e) {
             Logger.log(e);
@@ -36,44 +37,43 @@ public class MyBot extends Bot {
         int length = 0;
         HashMap<Ant,List<Tile>> missions = new HashMap<Ant,List<Tile>>();
         HashSet<Tile> checked = new HashSet<Tile>();
-        for (Ant myAnt : GameData.getMyAnts()) {
-            Logger.log("ant at "+myAnt.getTile());
-            if(myAnt.getPath().hasSteps())continue;//hij is al bezig
+        for (Ant myAnt : GameData.getMyBusyAnts()) {
             List<Tile> goals = myAnt.getTile().getTilesUnderADistance(10);
             length = goals.size(); // zijn toch allemaal even groot
             missions.put(myAnt, goals);
         }
         for (int i = 0; i<length; i++){
-            for (Ant myAnt : GameData.getMyAnts()){
-                if(myAnt.getPath().hasSteps())continue;//hij is al bezig
+            for (Ant myAnt : GameData.getMyBusyAnts()){
                 Tile goal = missions.get(myAnt).get(i);
                 if(checked.contains(goal))continue;//check every tile only once
                 checked.add(goal);
                 if(taken.contains(goal))continue;
                 boolean free = true;
-                for (Ant otherAnt : GameData.getMyAnts()){
-                    if(otherAnt.getPath().contains(goal)){
-                        free = false;
-                        break;
+                Ilk ilk = GameData.getIlk(goal);
+                if(ilk == null)continue;//don't know, don't care
+                if(ilk==Ilk.FOOD){
+                    for (Ant otherAnt : GameData.getMyAnts()){
+                        if(otherAnt.getPath().contains(goal)){
+                            free = false;
+                            break;
+                        }
                     }
-                }
-                if(free){
-                    Ilk ilk = GameData.getIlk(goal);
-                    if(ilk == null)continue;
-                    if(ilk==Ilk.FOOD){
+                    if(free){
                         Logger.log("is a plan");
                         //sounds like a plan :D
                         Path sp = myAnt.getTile().shortestPath(goal);
+                        if(sp==null)continue; //er bestaat geen pad
                         Logger.log(sp.getDistance());
                         sp = sp.withoutLastTile();
                         myAnt.setPath(sp);
                         taken.add(goal);
-                    }else if(ilk==Ilk.ENEMY_ANT){
-                        Path sp = myAnt.getTile().shortestPath(goal);
-                        myAnt.setPath(sp);
-                        taken.add(goal);
                     }
-                }
+                }else if(ilk==Ilk.ENEMY_ANT){
+                    Path sp = myAnt.getTile().shortestPath(goal);
+                    if(sp==null)continue; //er bestaat geen pad
+                    myAnt.setPath(sp);
+                    taken.add(goal);
+                }                
             }
         }
         //nothing? Go explore

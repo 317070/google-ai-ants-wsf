@@ -1,4 +1,9 @@
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
 /**
  * Gemaakt voor de WSF-deelname aan de google-AI contest
  * @author 317070 <erstaateenknolraapinmijntuin@gmail.com>
@@ -7,7 +12,8 @@ public class Ant {
     private Order order = null;
     private Tile tile;
     private Path path;
-
+    private ArrayList<Tile> memory = new ArrayList<Tile>();
+    
     Ant(Tile tile) {
         this.tile = tile;
         this.path = new Path(tile);
@@ -22,8 +28,7 @@ public class Ant {
         }
         order = new Order(tile, aim);
         OrderManager.addOrder(order);
-        Logger.log("next:"+path.getNextTile());
-        Logger.log("goal:"+path.getLastTile());
+        memory.add(tile);
     }
     
     public void setPath(Path path){
@@ -49,7 +54,7 @@ public class Ant {
     }
 
     void die() {
-        Logger.log("died :(");
+        Logger.log("died :( "+tile);
         this.setPath(new Path(tile));//remove the path
         this.tile = null;
     }
@@ -70,22 +75,38 @@ public class Ant {
         }
         
         if(closestFriend == null){
-            for(Tile b : tile.getBorderingTiles()){
-                if(!GameData.isPassable(b))continue;
+            for(Tile b : tile.getPassableBorderingTiles()){
                 path = path.push(b);
+                return;
             }
         }
         
         dist = 0;
         Tile besttile = null;
-        for(Tile b : tile.getBorderingTiles()){
-            if(!GameData.isPassable(b))continue;
+        List<Tile> bordertiles = tile.getPassableBorderingTiles();
+        Collections.shuffle(bordertiles);
+        for(Tile b : bordertiles){
+            if(memory.contains(b))continue;
             if(b.getDistanceTo(closestFriend)>=dist){
                 dist = b.getDistanceTo(closestFriend);
                 besttile = b;
             }
         }
-        path = path.push(besttile); 
+        if(besttile != null){
+            path = path.push(besttile);
+            return;
+        }else{
+            for(Tile b : bordertiles){
+                if(GameData.isPassable(b)){
+                    path = path.push(b);
+                    return;
+                }
+            } 
+        }
+    }
+
+    boolean isBusy() {
+        return path.hasSteps();
     }
     
 }
