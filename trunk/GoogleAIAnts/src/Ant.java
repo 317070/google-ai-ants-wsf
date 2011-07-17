@@ -33,6 +33,7 @@ public class Ant {
     
     public void setPath(Path path){
         this.path = path;
+        Logger.log("ant at "+tile+" has the goal "+path.getLastTile());
     }
     
     public Path getPath(){
