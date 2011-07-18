@@ -53,10 +53,14 @@ public class Ant {
     Tile getTile() {
         return tile;
     }
-
+    
+    void cancel(){
+        this.setPath(new Path(tile));//remove the path
+    }
+    
     void die() {
         Logger.log("died :( "+tile);
-        this.setPath(new Path(tile));//remove the path
+        cancel();
         this.tile = null;
     }
     
@@ -69,8 +73,8 @@ public class Ant {
         int dist = Integer.MAX_VALUE;
         for(Ant ant: GameData.getMyAnts()){
             if(ant.equals(this))continue;
-            if(tile.getDistanceTo(ant.getTile())<dist){
-                dist = tile.getDistanceTo(ant.getTile());
+            if(tile.getEuclidDistanceTo(ant.getTile())<dist){
+                dist = tile.getEuclidDistanceTo(ant.getTile());
                 closestFriend = ant.getTile();
             }
         }
@@ -88,8 +92,8 @@ public class Ant {
         Collections.shuffle(bordertiles);
         for(Tile b : bordertiles){
             if(memory.contains(b))continue;
-            if(b.getDistanceTo(closestFriend)>=dist){
-                dist = b.getDistanceTo(closestFriend);
+            if(b.getEuclidDistanceTo(closestFriend)>=dist){
+                dist = b.getEuclidDistanceTo(closestFriend);
                 besttile = b;
             }
         }

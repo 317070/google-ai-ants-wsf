@@ -46,7 +46,7 @@ public class Tile {
      * 
      * @return distance between <code>t1</code> and <code>t2</code>
      */
-    public int getDistanceTo(Tile tile) {
+    public int getEuclidDistanceTo(Tile tile) {
         int rowDelta = Math.abs(this.getRow() - tile.getRow());
         int colDelta = Math.abs(this.getCol() - tile.getCol());
         rowDelta = Math.min(rowDelta, GameParam.rows - rowDelta);
@@ -134,13 +134,13 @@ public class Tile {
     //vroeger was dit een
     //waterfill algoritme voor alle punten binnen een cirkel
     //maar dit blijkt 7x sneller te zijn.
-    public List<Tile> getTilesUnderAViewingDistance(int dist2){
+    public ArrayList<Tile> getTilesUnderAViewingDistance(int dist2){
         int r = (int) (Math.sqrt(dist2) + 0.5);//straal van de cirkel
         ArrayList<Tile>result = new ArrayList<Tile>();
         for(int i=-r;i<=r;i++){
             for(int j=-r; j<=r;j++){
                 Tile t = new Tile(this.row+i,this.col+j);
-                if(this.getDistanceTo(t)<=dist2){
+                if(this.getEuclidDistanceTo(t)<=dist2){
                     result.add(t);
                 }
             }
@@ -148,7 +148,7 @@ public class Tile {
         return result;
     }
     
-    public List<Tile> getTilesUnderAWalkingDistance(int dist){
+    public ArrayList<Tile> getTilesUnderAWalkingDistance(int dist){
         ArrayList<Tile> result = new ArrayList<Tile>();
         for(int i=1; i<=dist;i++){
             result.addAll(this.getTilesAtAWalkingDistance(i));
@@ -163,7 +163,7 @@ public class Tile {
      * @param dist
      * @return List of tiles
      */
-    public List<Tile> getTilesAtAWalkingDistance(int dist){
+    public ArrayList<Tile> getTilesAtAWalkingDistance(int dist){
         ArrayList<Tile> result = new ArrayList<Tile>();
         if(dist==0){
             result.add(this);
@@ -209,7 +209,7 @@ public class Tile {
             for(Tile b:borders){
                 Path newpath = shortest.push(b);
                 if(b.equals(to)){
-                    Logger.log( "memory:"+memory.size());
+                    //Logger.log( "memory:"+memory.size());
                     return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
                 }
                 int estimatedtotaldistance = newpath.getDistance() + b.getManhattenDistanceTo(to);
@@ -232,7 +232,7 @@ public class Tile {
             this.dist=dist;
             this.path = p;
         }
-
+        @Override
         public int compareTo(IntPath ip) {
             return this.dist - ip.dist;
         }
@@ -246,7 +246,7 @@ public class Tile {
         result.add(new Tile(this.row,this.col-1));
         return result;
     }
-    public List<Tile> getPassableBorderingTiles() {
+    public ArrayList<Tile> getPassableBorderingTiles() {
         ArrayList<Tile> result = getBorderingTiles();
         HashSet<Tile> rem = new HashSet<Tile>();
         for(Tile t:result){
