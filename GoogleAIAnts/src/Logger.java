@@ -22,7 +22,7 @@ class Logger {
                 try {
                     out = new BufferedWriter(new FileWriter(LOGFILE));
                 } catch (IOException ex) {
-                    logging = false;
+                    logging = false;                    
                 }
                 log("Started Logging");
             } else {
@@ -49,8 +49,9 @@ class Logger {
         e.printStackTrace(printWriter);
         log(result.toString());
     }
-
+    
     static void close() {
+        if(!logging)return;
         try {
             out.flush();
             out.close();
@@ -75,5 +76,9 @@ class Logger {
         } catch (IOException ex) {
             Logger.log(ex);
         }
+    }
+
+    static boolean isLogging() {
+        return logging;
     }
 }

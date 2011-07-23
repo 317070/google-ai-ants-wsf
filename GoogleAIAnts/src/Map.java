@@ -35,7 +35,15 @@ public class Map<T> implements Cloneable {
     }
 
     public void set(Tile tile, T t) {
-        map.get(tile.getRow()).set(tile.getCol(), t);
+        try{
+            map.get(tile.getRow()).set(tile.getCol(), t);
+        }catch(NullPointerException e){
+            Logger.log("tile: "+tile);
+            Logger.log("rownr: "+tile.getRow());
+            Logger.log("colnr: "+tile.getCol());
+            Logger.log("Map row "+map.get(tile.getRow()));
+            throw e;
+        }
     }
 
     //shallow copy, T is better immutable

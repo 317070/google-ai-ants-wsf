@@ -12,7 +12,7 @@ class Timer {
     }
 
     static int getTimeLeft() {
-        return (int) (GameParam.TIMEPERTURN - System.currentTimeMillis() + start);
+        return (int) (GameParam.turnTime - System.currentTimeMillis() + start);
     }
     
     private static int tic = 0;

@@ -28,17 +28,24 @@ public class MyBot extends Bot {
     }
 
     /**
-     * For every ant check every direction in fixed order (N, E, S, W) and move it if the tile is
-     * passable.
+     * Here, the actual macro-scale logic happens
      */
     HashSet<Tile> taken = new HashSet<Tile>();
     @Override
     public void doTurn() {
-        Logger.log("Started thinking about turn "+currentturn);
+        Logger.log("");
+        Logger.log("*******************************");
+        Logger.log("Started thinking about turn "+GameData.currentturn());
+        Logger.log("*******************************");
+        Logger.log(" Action:");
+        Logger.log("---------");
+        PlanManager.update();//make all plans execute update();
         
         int length = 0;
         HashMap<Ant,List<Tile>> missions = new HashMap<Ant,List<Tile>>();
         HashSet<Tile> checked = new HashSet<Tile>();
+        
+        
         for (Ant myAnt : GameData.getMyBusyAnts()) {
             List<Tile> goals = myAnt.getTile().getTilesUnderAWalkingDistance(10);
             length = goals.size(); // zijn toch allemaal even groot
@@ -50,37 +57,41 @@ public class MyBot extends Bot {
                 if(checked.contains(goal))continue;//check every tile only once
                 checked.add(goal);
                 if(taken.contains(goal))continue;
-                boolean free = true;
                 Ilk ilk = GameData.getIlk(goal);
-                if(ilk == null)continue;//don't know, don't care
+                if(ilk == null)continue;//don't know what this tile is, so don't care
                 if(ilk==Ilk.FOOD){
-                    for (Ant otherAnt : GameData.getMyAnts()){
-                        if(otherAnt.getPath().contains(goal)){
-                            free = false;
-                            break;
-                        }
-                    }
-                    if(free){
+                    if(!PlanManager.hasGoal(goal)){
                         //sounds like a plan :D
-                        Path sp = myAnt.getTile().shortestPath(goal);
-                        if(sp==null)continue; //er bestaat geen pad
-                        sp = sp.withoutLastTile();
-                        myAnt.setPath(sp);
-                        taken.add(goal);
+                        Plan plan = new FoodPlan(myAnt, goal);
+                        PlanManager.addPlan(plan);
+                        plan.execute();
                     }
                 }else if(ilk==Ilk.ENEMY_ANT && GameData.isVisible(goal)){
-                    Path sp = myAnt.getTile().shortestPath(goal);
-                    if(sp==null)continue; //er bestaat geen pad
-                    myAnt.setPath(sp);
-                    taken.add(goal);
+                    if(!PlanManager.hasGoal(goal)){
+                        Plan plan = new AttackPlan(myAnt,goal);
+                        PlanManager.addPlan(plan);
+                        plan.execute();
+                    }else{
+                        Plan plan = PlanManager.getPlan(goal);
+                        if(plan instanceof AttackPlan){
+                            AttackPlan att = (AttackPlan) plan;
+                            att.addAnt(myAnt);
+                        }else{
+                            Logger.log("(Mybot) This is a wrong kind of plan:"+plan);
+                        }
+                    }
+                    
                 }                
             }
         }
         //nothing? Go explore
         for (Ant myAnt : GameData.getMyAnts()) {
             if(myAnt.getPath().hasSteps())continue;//hij is al bezig
-            myAnt.fleeFromFriends();
+            myAnt.fleeToFriends();
         }
-        Logger.log("finished thinking");
+        Logger.log("");
+        Logger.log(" Result:");
+        Logger.log("---------");
+        Logger.flush();
     }
 }
