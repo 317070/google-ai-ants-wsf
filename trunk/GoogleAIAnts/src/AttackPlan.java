@@ -28,7 +28,7 @@ public class AttackPlan extends Plan{
         for(Ant ant : ants){
             Path p = ant.getTile().shortestPath(goal);
             if(p==null){//geen pad mogelijk, sta deze beurt stil
-                p = new Path(ant.getTile());
+                p = ant.getMinimalPath();
             }
             ant.setPath(p);
         }

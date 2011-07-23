@@ -34,9 +34,9 @@ public class Map<T> implements Cloneable {
         this.set(new Tile(i, j), t);
     }
 
-    public void set(Tile tile, T t) {
+    public T set(Tile tile, T t) {
         try{
-            map.get(tile.getRow()).set(tile.getCol(), t);
+            return map.get(tile.getRow()).set(tile.getCol(), t);
         }catch(NullPointerException e){
             Logger.log("tile: "+tile);
             Logger.log("rownr: "+tile.getRow());

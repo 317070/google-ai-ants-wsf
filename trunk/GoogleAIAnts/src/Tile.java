@@ -35,9 +35,9 @@ public class Tile {
     }
     
     Tile getTile(Aim aim){
-        int row = this.row + aim.getRowDelta();
-        int col = this.col + aim.getColDelta();
-        return new Tile(row,col);
+        int mrow = this.row + aim.getRowDelta();
+        int mcol = this.col + aim.getColDelta();
+        return new Tile(mrow,mcol);
     }
 
     /**
@@ -197,7 +197,7 @@ public class Tile {
         ArrayList<IntPath> memory = new ArrayList<IntPath>();
         HashSet<Tile> beenthere = new HashSet<Tile>();
         beenthere.add(this);
-        IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn());
+        IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn()+1);
         memory.add(start);
         while(true){
             if(memory.isEmpty()){

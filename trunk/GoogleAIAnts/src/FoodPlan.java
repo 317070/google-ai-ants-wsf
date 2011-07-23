@@ -13,6 +13,7 @@ public class FoodPlan extends Plan{
         Logger.log("Executing plan to get food on tile "+goal);
         Path p = ants.get(0).getTile().shortestPath(goal);
         if(p==null){
+            cancel();
             return false;
         }
         p = p.withoutLastTile();
