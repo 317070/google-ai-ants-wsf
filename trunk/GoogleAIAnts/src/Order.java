@@ -1,13 +1,13 @@
 
 /**
  * Represents an order to be issued.
+ * IMMUTABLE
  */
 public class Order {
 
-    private final int row;
-    private final int col;
-    private final char direction;
-
+    private final Tile from;
+    private final Tile to;
+    private final Aim direction;
     /**
      * Creates new {@link Order} object.
      * 
@@ -15,9 +15,9 @@ public class Order {
      * @param direction direction in which to move my ant
      */
     public Order(Tile tile, Aim direction) {
-        row = tile.getRow();
-        col = tile.getCol();
-        this.direction = direction.getSymbol();
+        from = tile;
+        this.direction = direction;
+        to = from.getTile(direction);
     }
 
     /**
@@ -25,10 +25,16 @@ public class Order {
      */
     @Override
     public String toString() {
-        return "o " + row + " " + col + " " + direction;
+        return "o " + from.getRow() + " " + from.getCol() + " " + direction.getSymbol();
     }
 
     void cancel() {
         OrderManager.cancel(this);
+    }
+    public Tile getTarget(){
+        return to;
+    }
+    public Tile getFrom(){
+        return from;
     }
 }

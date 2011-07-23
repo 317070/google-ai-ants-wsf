@@ -7,6 +7,8 @@ import java.util.List;
 
 /**
  * Represents a tile of the game map.
+ * 
+ * IMMUTABLE!
  */
 public class Tile {
 
@@ -195,15 +197,16 @@ public class Tile {
         ArrayList<IntPath> memory = new ArrayList<IntPath>();
         HashSet<Tile> beenthere = new HashSet<Tile>();
         beenthere.add(this);
-        IntPath start = new IntPath(this.getManhattenDistanceTo(to), p);
+        IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn());
         memory.add(start);
         while(true){
             if(memory.isEmpty()){
                 return null;
             }
+            int turn = memory.get(0).nextturn;
             Path shortest = memory.get(0).path;
             memory.remove(0);
-            List<Tile> borders = shortest.getLastTile().getPassableBorderingTiles();
+            List<Tile> borders = shortest.getLastTile().getPassableBorderingTilesOnTurn(turn);
             borders.removeAll(beenthere);
             Collections.shuffle(borders);
             for(Tile b:borders){
@@ -213,7 +216,7 @@ public class Tile {
                     return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
                 }
                 int estimatedtotaldistance = newpath.getDistance() + b.getManhattenDistanceTo(to);
-                IntPath ip = new IntPath(estimatedtotaldistance, newpath);
+                IntPath ip = new IntPath(estimatedtotaldistance, newpath, turn+1);
                 int insert = Collections.binarySearch(memory, ip);
                 if(insert<0){
                     insert = -insert-1;
@@ -228,9 +231,11 @@ public class Tile {
     private class IntPath implements Comparable<IntPath> {
         int dist;
         Path path;
-        IntPath(int dist, Path p){
+        int nextturn;
+        IntPath(int dist, Path p, int nextturn){
             this.dist=dist;
             this.path = p;
+            this.nextturn = nextturn;
         }
         @Override
         public int compareTo(IntPath ip) {
@@ -251,6 +256,17 @@ public class Tile {
         HashSet<Tile> rem = new HashSet<Tile>();
         for(Tile t:result){
             if(!GameData.isPassable(t)){
+                rem.add(t);
+            }
+        }
+        result.removeAll(rem);
+        return result;
+    }
+    public ArrayList<Tile> getPassableBorderingTilesOnTurn(int turn) {
+        ArrayList<Tile> result = getPassableBorderingTiles();
+        HashSet<Tile> rem = new HashSet<Tile>();
+        for(Tile t:result){
+            if(null != GameData.isThereAnAntThereOnThisTurn(t,turn)){
                 rem.add(t);
             }
         }

@@ -14,16 +14,31 @@ public class OrderManager {
     }
     
     public static void issueAllOrders(){
-        //TODO: do some checks to remove stupid mistakes, like 2 ants going to 1 tile
         for(Order ord:orders){
             System.out.println(ord);
         }
         System.out.println("go");
         System.out.flush();
         orders.clear();
+        check();
     }
 
     static void cancel(Order order) {
         orders.remove(order);
+    }
+    
+    static private void check(){
+        if(!Logger.isLogging())return;
+        for(Order o1:orders){
+            for(Order o2:orders){
+                if(o2 == o1)continue;
+                if(o1.getTarget().equals(o2.getTarget())){
+                    throw new RuntimeException( "SUICIDE WATCH NOTICED "+ o1 + o2);
+                }
+                if(o1.getFrom().equals(o2.getFrom())){
+                    throw new RuntimeException( "DUBBLE ORDER NOTICED "+ o1 + o2);
+                }
+            }
+        }
     }
 }

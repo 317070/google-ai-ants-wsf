@@ -19,7 +19,7 @@
     <target name="create.new.log">
         <delete file = "dist/MyLog.txt"/>
         <touch file = "dist/MyLog.txt" mkdirs="true"/>
-        <echo file="dist/MyLog.txt">Dit is geschreven door het compile-script. Als je dit leest is de logger nooit gestart.</echo> 
+        <echo file="dist/MyLog.txt">Dit is geschreven door het compile-script. Als je dit leest is de logger nooit gestart.</echo>
     </target>
     
     <target name="zip.upload">

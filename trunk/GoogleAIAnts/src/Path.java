@@ -13,7 +13,7 @@ public class Path {
         path = new ArrayList<Tile>();
         path.add(t);
     }
-    private Path(Path p){
+    Path(Path p){
         path = new ArrayList<Tile>(p.path);
     }
     //Path is immutable!
@@ -35,17 +35,21 @@ public class Path {
         }
     }
     
+    Tile getCurrentTile() {
+        return path.get(0);
+    }
+    
     Tile getNextTile() {
         if(path.size()>1){
             return path.get(1);
         }else{
-            return path.get(0);
+            return getCurrentTile();
         }
     }
 
     Aim getNextAim() {
         if(!getNextTile().equals(path.get(0))){
-            return path.get(0).getAimTo(getNextTile());
+            return getCurrentTile().getAimTo(getNextTile());
         }else{
             return null;
         }

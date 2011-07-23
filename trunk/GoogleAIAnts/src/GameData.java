@@ -20,6 +20,7 @@ public class GameData {
     private static ArrayList<Ant> myants = new ArrayList<Ant>(); // all my current ants
     private static ArrayList<Tile> enemyants = new ArrayList<Tile>(); //all enemy ants currently visible
     private static ArrayList<Tile> foodtiles = new ArrayList<Tile>(); //all tiles containing food
+    private static ArrayList<Map<Ant>> plannedfuture = new ArrayList<Map<Ant>>();
     
     public static void init(){
         world = new Map<Ilk>();
@@ -39,7 +40,11 @@ public class GameData {
         see = see.clone();
         certain.add(see);
         
-        enemyants.clear();        
+        for(Tile enemy:enemyants){
+            world.set(enemy, Ilk.LAND);//don't remember these, they don't get updated by the engine
+        }
+        enemyants.clear();
+        
     }
     /**
      * Updates game state information about new ants and food locations.
@@ -48,6 +53,7 @@ public class GameData {
      * @param tile location on the game map to be updated
      */
     private static HashSet<Ant> found = new HashSet<Ant>();
+    
     public static void update(Ilk ilk, Tile tile) {
         world.set(tile, ilk);
         switch (ilk) {
@@ -137,6 +143,9 @@ public class GameData {
     static int currentturn() {
         return currentturn;
     }
+    static void setturn(int turn) {
+        currentturn = turn;
+    }
 
     static Ilk getIlk(Tile tile) {
         return world.get(tile);
@@ -152,5 +161,47 @@ public class GameData {
     }
     static boolean isExplored(Tile goal) {
         return explored.get(goal);
+    }
+    
+    static Ant isThereAnAntThereOnThisTurn(Tile t, int turn){
+        try{
+            return plannedfuture.get(turn).get(t);
+        }catch(IndexOutOfBoundsException e){//The map doesn't exist? There hasn't been any reservation...
+            return null;
+        }
+    }
+    
+    static void reservePath(Ant a, Path p){
+        Path copy = new Path(p);
+        int turn = currentturn;
+        while(copy.hasSteps()){
+            Tile step = copy.getCurrentTile();
+            while(plannedfuture.size()<=turn){
+                plannedfuture.add(new Map<Ant>());
+            }
+            plannedfuture.get(turn).set(step, a);
+            copy = copy.pop();
+            turn++;
+        }
+        Tile step = copy.getCurrentTile();
+        while(plannedfuture.size()<=turn){
+            plannedfuture.add(new Map<Ant>());
+        }
+        plannedfuture.get(turn).set(step, a);
+        copy = copy.pop();
+    }
+    
+    static void cancelPath(Ant a, Path p){
+        Path copy = new Path(p);
+        int turn = currentturn;
+        while(copy.hasSteps()){
+            Tile step = copy.getCurrentTile();
+            plannedfuture.get(turn).set(step, a);
+            copy = copy.pop();
+            turn++;
+        }
+        Tile step = copy.getCurrentTile();
+        plannedfuture.get(turn).set(step, a);
+        copy = copy.pop();
     }
 }

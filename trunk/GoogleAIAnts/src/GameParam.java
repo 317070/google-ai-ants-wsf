@@ -7,7 +7,6 @@
  * @author Jonas
  */
 public class GameParam {
-    final static long TIMEPERTURN = 1000;
     static int loadTime;
     static int turnTime;
     static int rows; 

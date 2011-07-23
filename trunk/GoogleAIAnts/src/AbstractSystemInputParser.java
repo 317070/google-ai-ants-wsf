@@ -13,8 +13,6 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
     private static final String GO = "go";
     private static final char COMMENT_CHAR = '#';
     private final List<String> input = new ArrayList<String>();
-    
-    static int currentturn;
 
     private enum SetupToken {
 
@@ -135,7 +133,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
             }
             if(line.indexOf("turn")==0){
                 String[] spl = line.split(" ");
-                currentturn = Integer.parseInt(spl[spl.length-1]);
+                GameData.setturn(Integer.parseInt(spl[spl.length-1]));
             }
             Scanner scanner = new Scanner(line);
             if (!scanner.hasNext()) {
