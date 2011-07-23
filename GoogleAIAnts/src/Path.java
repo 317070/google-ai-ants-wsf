@@ -60,7 +60,10 @@ public class Path {
     }
     
     boolean hasSteps(){
-        return path.size()>1;
+        if(path.size() < 2)return false;
+        if(path.size() > 2)return true;
+        if(path.get(0).equals(path.get(1)))return false;
+        return true;
     }
     
     boolean contains(Tile tile){
@@ -78,6 +81,9 @@ public class Path {
     Path withoutLastTile() {
         Path res = new Path(this);
         res.path.remove(path.size()-1);
+        if(res.path.size()==1){
+            res.path.add(res.path.get(0));//blijf stilstaan
+        }
         return res;
     }
 }

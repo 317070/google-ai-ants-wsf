@@ -17,7 +17,7 @@ public class Ant {
     
     Ant(Tile tile) {
         this.tile = tile;
-        setPath(new Path(tile));
+        setPath(getMinimalPath());//initieel plan = stilstaan
     }
     
     private void goIntoDirection(Aim aim){
@@ -33,9 +33,14 @@ public class Ant {
     }
     
     public void setPath(Path path){
+        if(this.path != null){
+            GameData.cancelPath(this, this.path);//remove the old path
+        }
         this.path = path;
-        Logger.log("ant at "+tile+" has the goal "+path.getLastTile());
-        GameData.reservePath(this, path);
+        if(path != null){
+            Logger.log("ant at "+tile+" has the goal "+path.getLastTile());
+            GameData.reservePath(this, path);
+        }
     }
     
     public Path getPath(){
@@ -48,7 +53,7 @@ public class Ant {
             tile = path.getNextTile();
             path = path.pop();
         }else{
-            this.path = new Path(tile);
+            cancel();
         }
     }
 
@@ -58,13 +63,12 @@ public class Ant {
     
     void cancel(){
         if(isDead())return;
-        GameData.cancelPath(this, path);
-        this.setPath(new Path(tile));//remove the path
+        setPath(getMinimalPath());//sta stil
     }
     
     void die() {
         Logger.log("died :( "+tile);
-        cancel();
+        this.setPath(null);
         this.tile = null;
         dead = true;
     }
@@ -84,6 +88,7 @@ public class Ant {
     public void fleeFromFriends(){
         Tile closestFriend = null;
         int dist = Integer.MAX_VALUE;
+        Path p = new Path(tile);
         // 1) zoek de dichtste mier
         for(Ant ant: GameData.getMyAnts()){
             if(ant.equals(this))continue;
@@ -96,7 +101,7 @@ public class Ant {
         // geen vriend, willekeurige richting
         if(closestFriend == null){
             for(Tile b : tile.getPassableBorderingTilesOnTurn(GameData.currentturn()+1)){
-                setPath(path.push(b));
+                setPath(p.push(b));
                 return;
             }
         }
@@ -114,21 +119,23 @@ public class Ant {
             }
         }
         if(besttile != null){
-            setPath(path.push(besttile));
+            setPath(p.push(besttile));
             return;
         }else{
             for(Tile b : bordertiles){
                 if(GameData.isPassable(b)){
-                    setPath(path = path.push(b));
+                    setPath(p.push(b));
                     return;
                 }
             } 
         }
+        setPath(getMinimalPath());
     }
     
     public void fleeToFriends(){
         Tile closestFriend = null;
         int dist = Integer.MAX_VALUE;
+        Path p = new Path(tile);
         // 1) zoek de dichtste mier
         for(Ant ant: GameData.getMyAnts()){
             if(ant.equals(this))continue;
@@ -141,7 +148,7 @@ public class Ant {
         // geen vriend, willekeurige richting
         if(closestFriend == null){
             for(Tile b : tile.getPassableBorderingTilesOnTurn(GameData.currentturn()+1)){
-                setPath(path.push(b));
+                setPath(p.push(b));
                 return;
             }
         }
@@ -159,16 +166,33 @@ public class Ant {
             }
         }
         if(besttile != null){
-            setPath(path.push(besttile));
+            setPath(p.push(besttile));
             return;
         }else{
             for(Tile b : bordertiles){
-                if(GameData.isPassable(b)){
-                    setPath(path = path.push(b));
+                if(GameData.isPassableOnTurn(b, GameData.currentturn()+1)){
+                    setPath(p.push(b));
                     return;
                 }
             } 
         }
+        setPath(getMinimalPath());
+    }
+    
+    public Path getMinimalPath(){
+        int nextturn = GameData.currentturn()+1;
+        Path p = new Path(tile); //initieel plan = stilstaan
+        if(GameData.isPassableOnTurn(tile, nextturn)){
+            p = p.push(tile);
+            return p;
+        }else{
+            for(Tile t:tile.getPassableBorderingTilesOnTurn(nextturn)){
+                p = p.push(t);
+                return p;
+            }
+        }
+        Logger.log("Ant at "+tile+" has nowhere to go...");
+        return null; //this is already a dead ant
     }
     
 }

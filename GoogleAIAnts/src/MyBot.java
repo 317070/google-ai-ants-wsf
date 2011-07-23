@@ -87,7 +87,7 @@ public class MyBot extends Bot {
         //nothing? Go explore
         for (Ant myAnt : GameData.getMyAnts()) {
             if(myAnt.getPath().hasSteps())continue;//hij is al bezig
-            myAnt.fleeToFriends();
+            myAnt.fleeFromFriends();
         }
         Logger.log("");
         Logger.log(" Result:");

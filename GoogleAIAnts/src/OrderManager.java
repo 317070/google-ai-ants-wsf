@@ -20,7 +20,7 @@ public class OrderManager {
         System.out.println("go");
         System.out.flush();
         orders.clear();
-        check();
+        //check();
     }
 
     static void cancel(Order order) {

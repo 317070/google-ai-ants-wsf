@@ -155,7 +155,11 @@ public class GameData {
         if(world.get(tile)==null)return true;//if we don't know, let's assume we can pass
         return world.get(tile).isPassable();
     }
-
+    
+    static boolean isPassableOnTurn(Tile tile, int turn) {
+        return isPassable(tile) && (null == GameData.isThereAnAntThereOnThisTurn(tile, GameData.currentturn()+1));
+    }
+    
     static boolean isVisible(Tile goal) {
         return see.get(goal);
     }
@@ -179,7 +183,10 @@ public class GameData {
             while(plannedfuture.size()<=turn){
                 plannedfuture.add(new Map<Ant>());
             }
-            plannedfuture.get(turn).set(step, a);
+            Ant oldval = plannedfuture.get(turn).set(step, a);
+            if(oldval != null){
+                throw new RuntimeException("Reserving a tile which is already reserved:"+oldval);
+            }
             copy = copy.pop();
             turn++;
         }
@@ -187,7 +194,10 @@ public class GameData {
         while(plannedfuture.size()<=turn){
             plannedfuture.add(new Map<Ant>());
         }
-        plannedfuture.get(turn).set(step, a);
+        Ant oldval = plannedfuture.get(turn).set(step, a);
+        if(oldval != null){
+            throw new RuntimeException("Reserving a tile which is already reserved:"+oldval);
+        }
         copy = copy.pop();
     }
     
@@ -196,12 +206,12 @@ public class GameData {
         int turn = currentturn;
         while(copy.hasSteps()){
             Tile step = copy.getCurrentTile();
-            plannedfuture.get(turn).set(step, a);
+            plannedfuture.get(turn).set(step, null);
             copy = copy.pop();
             turn++;
         }
         Tile step = copy.getCurrentTile();
-        plannedfuture.get(turn).set(step, a);
+        plannedfuture.get(turn).set(step, null);
         copy = copy.pop();
     }
 }
