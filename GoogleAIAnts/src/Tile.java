@@ -161,7 +161,6 @@ public class Tile {
     /**
      * Return all the tiles at a certain distance, 
      * the ones with the most possible paths in an empty terrain first
-     * then according to NESW
      * @param dist
      * @return List of tiles
      */
@@ -192,15 +191,28 @@ public class Tile {
     }
 
     //A* implementatie
+    //geeft het heuristisch kortste pad terug van deze tile naar een andere tile.
+    //Als die andere tile passable is, eindigt het pad op die andere tile.
+    //Als die andere tile niet-passable is, eindigt het pad naast die andere tile.
+    //Indien geen zo'n pad bestaat, return null
     Path shortestPath(Tile to) {
-        Path p = new Path(this);
+        Path p = new Path(this);//vertek van deze node
+        ArrayList<Tile> goals = new ArrayList<Tile>();
+        if(GameData.isPassable(to)){
+            goals.add(to);
+        }else{
+            goals.addAll(to.getPassableBorderingTiles());
+        }
+        if(goals.isEmpty()){//die tile is niet bereikbaar want ze is omringd door water
+            return null;
+        }
         ArrayList<IntPath> memory = new ArrayList<IntPath>();
         HashSet<Tile> beenthere = new HashSet<Tile>();
         beenthere.add(this);
         IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn()+1);
         memory.add(start);
         while(true){
-            if(memory.isEmpty()){
+            if(memory.isEmpty()){//die tile is niet bereikbaar want we zijn ervan afgesloten
                 return null;
             }
             int turn = memory.get(0).nextturn;
@@ -211,7 +223,7 @@ public class Tile {
             Collections.shuffle(borders);
             for(Tile b:borders){
                 Path newpath = shortest.push(b);
-                if(b.equals(to)){
+                if(goals.contains(b)){
                     //Logger.log( "memory:"+memory.size());
                     return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
                 }

@@ -16,7 +16,6 @@ public class FoodPlan extends Plan{
             cancel();
             return false;
         }
-        p = p.withoutLastTile();
         ants.get(0).setPath(p);
         return true;
     }
@@ -30,6 +29,13 @@ public class FoodPlan extends Plan{
         }
         if( ants.get(0).getTile().equals(goal)){
             finish();
+        }
+        if(! GameData.isThisPathStillPassable(ants.get(0).getPath())){
+            Path p = ants.get(0).getTile().shortestPath(goal);
+            if(p==null){
+                cancel();
+            }
+            ants.get(0).setPath(p);
         }
     }
 }

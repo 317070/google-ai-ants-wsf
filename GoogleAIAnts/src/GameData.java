@@ -214,4 +214,17 @@ public class GameData {
         plannedfuture.get(turn).set(step, null);
         copy = copy.pop();
     }
+    
+    //kijk of het pad nog steeds bewandelbaar is, dit kan veranderd zijn doordat we nu meer tiles zien.
+    //houdt geen rekening met reservaties!
+    static boolean isThisPathStillPassable(Path path){
+        Path copy = new Path(path);
+        while(copy.hasSteps()){
+            if(!isPassable(copy.getCurrentTile())){
+                return false;
+            }
+            copy = copy.pop();
+        }
+        return true;
+    }
 }
