@@ -192,7 +192,8 @@ public class Ant {
             }
         }
         Logger.log("Ant at "+tile+" has nowhere to go...");
-        return null; //this is already a dead ant
+        p = p.push(tile);//sta stil
+        return p; //this is already a dead ant
     }
     
 }

@@ -30,6 +30,7 @@ public enum Ilk {
     public boolean isPassable() {
         switch(this){
             case WATER:
+            case FOOD:
                 return false;
             default:
                 return true;
