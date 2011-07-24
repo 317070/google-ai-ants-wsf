@@ -44,6 +44,9 @@ class Logger {
     }
 
     static void log(Exception e) {
+        if (!logging) {
+            return;
+        }
         Writer result = new StringWriter();
         PrintWriter printWriter = new PrintWriter(result);
         e.printStackTrace(printWriter);
@@ -71,6 +74,9 @@ class Logger {
     }
     
     static void flush(){
+        if (!logging) {
+            return;
+        }
         try {
             out.flush();
         } catch (IOException ex) {
