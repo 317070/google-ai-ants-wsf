@@ -19,7 +19,7 @@ public class PlanManager {
     }
     public static void update(){
         ArrayList<Plan> copy = new ArrayList<Plan>(planlist);
-        for(Plan plan: copy){//planlist kan veranderen in de forloop, nieuwe plannen worden nog niet ge-updatet
+        for(Plan plan: copy){//planlist zelf kan veranderen in de forloop, nieuwe plannen worden nog niet ge-updatet
             plan.update();
         }
     }
@@ -40,4 +40,23 @@ public class PlanManager {
         return goalplan.get(goal);
     }
     
+    //TODO: too slow for what it should do at the moment, keep this information stored somehow
+    static boolean isBusy(Ant a){
+        for(Plan p:planlist){
+            if(p.ants.contains(a))
+                return true;
+        }
+        return false;
+    }
+    
+    static ArrayList<Ant> getAvailableAnts(){
+        ArrayList<Ant> res = new ArrayList<Ant>(GameData.getMyAnts());
+        ArrayList<Ant> bin = new ArrayList<Ant>();
+        for(Ant a:res){
+            if(isBusy(a))
+                bin.add(a);
+        }
+        res.removeAll(bin);
+        return res;
+    }
 }

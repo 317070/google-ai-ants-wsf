@@ -8,7 +8,7 @@ import java.util.List;
  * Gemaakt voor de WSF-deelname aan de google-AI contest
  * @author 317070 <erstaateenknolraapinmijntuin@gmail.com>
  */
-public class Ant {
+final public class Ant {
     private Order order = null;
     private Tile tile;
     private Path path;
@@ -17,7 +17,7 @@ public class Ant {
     
     Ant(Tile tile) {
         this.tile = tile;
-        setPath(getMinimalPath());//initieel plan = stilstaan
+        path = null;
     }
     
     private void goIntoDirection(Aim aim){
@@ -34,7 +34,7 @@ public class Ant {
     
     public void setPath(Path path){
         if(this.path != null){
-            GameData.cancelPath(this, this.path);//remove the old path
+            GameData.cancelPath(this.path);//remove the old path
         }
         this.path = path;
         if(path != null){
@@ -42,12 +42,22 @@ public class Ant {
             GameData.reservePath(this, path);
         }
     }
-    
+    public void setMinimalPath(){
+        setPath(getMinimalPath());
+    }
     public Path getPath(){
         return path;
     }
-    
+    public boolean hasPath(){
+        return path!=null;
+    }
     public void update(){
+        if(isDead())return;
+        if(path==null){
+            Logger.log("Ant on "+tile+" has no further path. He's wondering around");
+            setMinimalPath();//een mier gaat als hij geen pad meer heeft, vanzelf niets meer doen, hij gaat echter ook niet in de weg lopen.
+        }
+        if(isDead())return;
         if(GameData.isPassable(path.getNextTile())){
             goIntoDirection(path.getNextAim());
             tile = path.getNextTile();
@@ -62,15 +72,15 @@ public class Ant {
     }
     
     void cancel(){
-        if(isDead())return;
-        setPath(getMinimalPath());//sta stil
+        if(dead)return;
+        setPath(null);
     }
     
     void die() {
+        dead = true;
         Logger.log("died :( "+tile);
         this.setPath(null);
         this.tile = null;
-        dead = true;
     }
     
     boolean equals(Ant a){
@@ -129,7 +139,7 @@ public class Ant {
                 }
             } 
         }
-        setPath(getMinimalPath());
+        path = null;
     }
     
     public void fleeToFriends(){
@@ -176,24 +186,32 @@ public class Ant {
                 }
             } 
         }
-        setPath(getMinimalPath());
+        path=null;
     }
     
-    public Path getMinimalPath(){
+    private Path getMinimalPath(){
         int nextturn = GameData.currentturn()+1;
-        Path p = new Path(tile); //initieel plan = stilstaan
+        Path p = new Path(tile); 
         if(GameData.isPassableOnTurn(tile, nextturn)){
             p = p.push(tile);
-            return p;
+            return p;//initieel plan = stilstaan
         }else{
             for(Tile t:tile.getPassableBorderingTilesOnTurn(nextturn)){
                 p = p.push(t);
-                return p;
+                return p;//anders, buur
             }
         }
         Logger.log("Ant at "+tile+" has nowhere to go...");
-        p = p.push(tile);//sta stil
-        return p; //this is already a dead ant
+        //p = p.push(tile);//sta stil
+        //return p; //this is already a dead ant
+        dead = true;//this is already a dead ant
+        return null;
+    }
+
+    public boolean updatePath() {
+        Path p = getTile().shortestPath(getPath().getLastTile());
+        setPath(p);
+        return (p!=null);
     }
     
 }

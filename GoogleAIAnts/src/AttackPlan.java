@@ -28,7 +28,8 @@ public class AttackPlan extends Plan{
         for(Ant ant : ants){
             Path p = ant.getTile().shortestPath(goal);
             if(p==null){//geen pad mogelijk, sta deze beurt stil
-                p = ant.getMinimalPath();
+                ant.setMinimalPath();
+                continue;
             }
             ant.setPath(p);
         }
@@ -37,7 +38,7 @@ public class AttackPlan extends Plan{
     }
 
     @Override
-    public void update() {
+    public boolean update() {
         Logger.log("Updating attackplan with goal "+goal);
         ArrayList<Ant> bin = new ArrayList<Ant>();
         for(Ant a:ants){
@@ -48,6 +49,7 @@ public class AttackPlan extends Plan{
         ants.removeAll(bin);
         if(ants.isEmpty()){
             cancel();
+            return false;
         }
         if(!GameData.getIlk(goal).equals(Ilk.ENEMY_ANT)){
             Logger.log("The enemy moved!");
@@ -59,12 +61,13 @@ public class AttackPlan extends Plan{
                     AttackPlan np = new AttackPlan(ants,tile);
                     PlanManager.addPlan(np);
                     np.execute();
-                    return;
+                    return false;
                 }
             }
             //hij heeft de vijand niet terug gevonden
             Logger.log("Couldn't find enemy ant back expected on "+goal);
             cancel();
         }
+        return false;
     }
 }

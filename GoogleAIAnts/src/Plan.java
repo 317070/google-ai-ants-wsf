@@ -25,6 +25,7 @@ public abstract class Plan {
     }
     
     public void cancel(){
+        Logger.log("Cancelling plan");
         for(Ant a:ants){
             a.cancel();
         }
@@ -34,9 +35,9 @@ public abstract class Plan {
     //returns whether execution is possible
     abstract public boolean execute();
     //this get's executed every turn until the plan removes itself from the planpool
-    abstract public void update();
+    abstract public boolean update();
     
     protected void finish(){
-        
+        cancel();
     }
 }
