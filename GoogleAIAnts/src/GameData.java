@@ -17,7 +17,7 @@ public class GameData {
     private static ArrayList<Map<Boolean>> certain = new ArrayList<Map<Boolean>>(); //keep track of what we saw at what time?
     
     private static ArrayList<Ant> myants = new ArrayList<Ant>(); // all my current ants
-    private static ArrayList<Tile> enemyants = new ArrayList<Tile>(); //all enemy ants currently visible
+    private static ArrayList<EnemyAnt> enemyants = new ArrayList<EnemyAnt>(); //all enemy ants currently visible
     private static ArrayList<Tile> foodtiles = new ArrayList<Tile>(); //all tiles containing food
     private static ArrayList<Map<Ant>> plannedfuture = new ArrayList<Map<Ant>>();
     
@@ -39,15 +39,16 @@ public class GameData {
         see = see.clone();
         certain.add(see);
         
-        for(Tile enemy:enemyants){
-            world.set(enemy, Ilk.LAND);//don't remember these, they don't get updated by the engine
+        for(EnemyAnt enemy:enemyants){
+            world.set(enemy.getTile(), Ilk.LAND);//don't remember these, they don't get updated by the engine
         }
         for(Tile food:foodtiles){
             world.set(food, Ilk.LAND);//don't remember these, they don't get updated by the engine
         }
-        enemyants.clear();
         foodtiles.clear();
-        
+        notyetfound = new ArrayList<EnemyAnt>(enemyants);
+        found.clear();
+        foundenemy.clear();
     }
     /**
      * Updates game state information about new ants and food locations.
@@ -56,17 +57,17 @@ public class GameData {
      * @param tile location on the game map to be updated
      */
     private static HashSet<Ant> found = new HashSet<Ant>();
+    private static HashSet<EnemyAnt> foundenemy = new HashSet<EnemyAnt>();
+    private static ArrayList<EnemyAnt> notyetfound;
     
-    public static void update(Ilk ilk, Tile tile) {
+    public static void update(Ilk ilk, Tile tile, int kind) {
         world.set(tile, ilk);
+        boolean OK = false;
         switch (ilk) {
             case FOOD:
-                if (!foodtiles.contains(tile)) {
-                    foodtiles.add(tile);
-                }
-                break;
+                foodtiles.add(tile);
+            break;
             case MY_ANT:
-                boolean OK = false;
                 for(Ant ant: myants){
                     if(ant.getTile().equals(tile)){
                         found.add(ant);//make sure it is the same ant, so it keeps its memory
@@ -78,16 +79,22 @@ public class GameData {
                     Logger.log("een nieuwe ant gevonden op "+tile);
                     found.add(new Ant(tile));
                 }
-                if (foodtiles.contains(tile)) {
-                    foodtiles.remove(tile);
-                }
-                break;
+            break;
             case ENEMY_ANT:
-                enemyants.add(tile);
-                if (foodtiles.contains(tile)) {
-                    foodtiles.remove(tile);
+                for(EnemyAnt ant: notyetfound){
+                    if(ant.getTile().getBorderingTiles().contains(tile) && ant.getKind()==kind){
+                        notyetfound.remove(ant);
+                        foundenemy.add(ant);//make sure it is the same ant, so it keeps its memory
+                        ant.update(tile);
+                        OK = true;
+                        break;
+                    }
                 }
-                break;
+                if(!OK){
+                    Logger.log("een nieuwe vijand gevonden op "+tile);
+                    foundenemy.add(new EnemyAnt(tile,kind));
+                }
+            break;
         }
     }
 
@@ -98,7 +105,13 @@ public class GameData {
             ant.die();
         }
         myants = new ArrayList<Ant>(found);
-        found.clear();
+        
+        enemyants.removeAll(foundenemy);
+        for(EnemyAnt ant:enemyants){
+            ant.lost();
+        }
+        enemyants = new ArrayList<EnemyAnt>(foundenemy);
+        
         Timer.tic();
         updateVisibility();
         Logger.log("it took "+Timer.toc()+"ms to update visibility");
@@ -129,8 +142,8 @@ public class GameData {
         return new ArrayList<Ant>(myants);
     }
     
-    static ArrayList<Tile> getEnemyAnts() {
-        return new ArrayList<Tile>(enemyants);
+    static ArrayList<EnemyAnt> getEnemyAnts() {
+        return new ArrayList<EnemyAnt>(enemyants);
     }
 
     static int currentturn() {
@@ -147,6 +160,11 @@ public class GameData {
     static boolean isPassable(Tile tile) {
         if(world.get(tile)==null)return true;//if we don't know, let's assume we can pass
         return world.get(tile).isPassable();
+    }
+    
+    static boolean isWater(Tile tile) {
+        if(world.get(tile)==null)return true;//if we don't know, let's assume we can pass
+        return world.get(tile)==Ilk.WATER;
     }
     
     static boolean isPassableOnTurn(Tile tile, int turn) {

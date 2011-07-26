@@ -8,7 +8,8 @@ import java.util.List;
  * Gemaakt voor de WSF-deelname aan de google-AI contest
  * @author 317070 <erstaateenknolraapinmijntuin@gmail.com>
  */
-final public class Ant {
+final public class Ant implements HasTile {
+
     private Order order = null;
     private Tile tile;
     private Path path;
@@ -17,6 +18,7 @@ final public class Ant {
     
     Ant(Tile tile) {
         this.tile = tile;
+        memory.add(tile);
         path = null;
     }
     
@@ -42,37 +44,49 @@ final public class Ant {
             GameData.reservePath(this, path);
         }
     }
-    public void setMinimalPath(){
-        setPath(getMinimalPath());
-    }
     public Path getPath(){
         return path;
     }
     public boolean hasPath(){
         return path!=null;
     }
-    public void update(){
+    
+    public static void checkAllMyAntsForPaths(){
+        for(Ant a:GameData.getMyAnts()){
+           a.checkPath();
+        }
+    }
+    public void checkPath(){
         if(isDead())return;
         if(path==null){
             Logger.log("Ant on "+tile+" has no further path. He's wondering around");
             setMinimalPath();//een mier gaat als hij geen pad meer heeft, vanzelf niets meer doen, hij gaat echter ook niet in de weg lopen.
         }
+    }
+    
+    static void updateAllMyAnts() {
+        for(Ant ant:GameData.getMyAnts()){
+            ant.update();
+        }
+    }
+    public void update(){
         if(isDead())return;
         if(GameData.isPassable(path.getNextTile())){
             goIntoDirection(path.getNextAim());
             tile = path.getNextTile();
             path = path.pop();
         }else{
-            cancel();
+            //throw new RuntimeException("The ant at "+this.getTile()+ " is trying to walk on water/food");
         }
     }
 
-    Tile getTile() {
+    public Tile getTile() {
         return tile;
     }
     
     void cancel(){
         if(dead)return;
+        Logger.log("Cancelling path of ant at "+tile);
         setPath(null);
     }
     
@@ -83,10 +97,15 @@ final public class Ant {
         this.tile = null;
     }
     
-    boolean equals(Ant a){
+    public boolean equals(Ant a){
         return this.tile.equals(a.tile);
     }
-
+    
+    @Override
+    public int hashCode(){
+        return memory.get(0).hashCode();
+    }
+    
     boolean isBusy() {
         return path.hasSteps();
     }
@@ -95,13 +114,13 @@ final public class Ant {
         return dead;
     }
     
-    public void fleeFromFriends(){
+    public void fleeFrom(ArrayList<HasTile> list){
         Tile closestFriend = null;
         int dist = Integer.MAX_VALUE;
         Path p = new Path(tile);
         // 1) zoek de dichtste mier
-        for(Ant ant: GameData.getMyAnts()){
-            if(ant.equals(this))continue;
+        for(HasTile ant: list){
+            if(this.getTile().equals(ant.getTile()))continue;//je moet niet van jezelf wegvluchten
             if(tile.getEuclidDistanceTo(ant.getTile())<dist){
                 dist = tile.getEuclidDistanceTo(ant.getTile());
                 closestFriend = ant.getTile();
@@ -142,13 +161,13 @@ final public class Ant {
         path = null;
     }
     
-    public void fleeToFriends(){
+    public void fleeToFriends(ArrayList<HasTile> list){
         Tile closestFriend = null;
         int dist = Integer.MAX_VALUE;
         Path p = new Path(tile);
         // 1) zoek de dichtste mier
-        for(Ant ant: GameData.getMyAnts()){
-            if(ant.equals(this))continue;
+        for(HasTile ant: list){
+            if(ant.getTile().equals(this.getTile()))continue;
             if(tile.getEuclidDistanceTo(ant.getTile())<dist){
                 dist = tile.getEuclidDistanceTo(ant.getTile());
                 closestFriend = ant.getTile();
@@ -163,7 +182,7 @@ final public class Ant {
             }
         }
         
-        // 2) ga daar zo ver mogelijk van
+        // 2) ga daar zo dicht mogelijk bij
         dist = Integer.MAX_VALUE;
         Tile besttile = null;
         List<Tile> bordertiles = tile.getPassableBorderingTilesOnTurn(GameData.currentturn()+1);
@@ -188,24 +207,42 @@ final public class Ant {
         }
         path=null;
     }
-    
-    private Path getMinimalPath(){
+    private static boolean nowheretogo = false;
+    public void setMinimalPath(){
+        nowheretogo = false;
         int nextturn = GameData.currentturn()+1;
         Path p = new Path(tile); 
         if(GameData.isPassableOnTurn(tile, nextturn)){
             p = p.push(tile);
-            return p;//initieel plan = stilstaan
+            setPath(p);//anders, buur
+            return;
         }else{
             for(Tile t:tile.getPassableBorderingTilesOnTurn(nextturn)){
                 p = p.push(t);
-                return p;//anders, buur
+                setPath(p);//anders, buur
+                return;
             }
         }
         Logger.log("Ant at "+tile+" has nowhere to go...");
+        nowheretogo=true;
+        //probeer te bewegen i.p.v. stil te staan -> geen deadlocks!
+        for(Tile t:tile.getPassableBorderingTiles()){
+            Ant a = GameData.isThereAnAntThereOnThisTurn(t, nextturn);
+            if(a.nowheretogo)continue;//zorg ervoor dat je binnen deze beurt iedere ant hoogstens 1 keer annuleert
+            a.cancel();//smijt zijn pad weg
+            p = p.push(t);
+            setPath(p);//beweeg naar zijn plaats
+            a.setMinimalPath();//geef hem een nieuw pad
+            return;
+        }
         //p = p.push(tile);//sta stil
         //return p; //this is already a dead ant
-        dead = true;//this is already a dead ant
-        return null;
+        Ant a = GameData.isThereAnAntThereOnThisTurn(tile, nextturn);
+        a.cancel();//smijt zijn pad weg
+        p = p.push(tile);
+        setPath(p);//sta stil
+        a.setMinimalPath();//geef hem een nieuw pad
+        return;
     }
 
     public boolean updatePath() {

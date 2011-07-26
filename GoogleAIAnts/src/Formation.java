@@ -10,7 +10,7 @@ import java.util.List;
  * Gemaakt voor de WSF-deelname aan de google-AI contest
  * @author 317070 <erstaateenknolraapinmijntuin@gmail.com>
  */
-public class Formation extends Plan{
+public class Formation extends Plan implements HasTile{
     final static boolean[][] TARGET = {
         {true, true, true, true, true},
         {true,false,false,false, true},
@@ -35,27 +35,20 @@ public class Formation extends Plan{
     private ArrayList<Delta> deltalist = new ArrayList<Delta>();
     protected boolean formed = false;
     
-    //create a formation on the goal with the form using these ants
-    public Formation(List<Ant> lants, boolean[][] form, Tile goal){
+    //create a formation on the leader with the form using these ants
+    public Formation(List<Ant> lants, boolean[][] form, Tile leader){
         this.ants = new ArrayList<Ant>(lants);
-        this.goal = goal;
-        int ci = form.length/2;
-        int cj = form[ci].length/2;
-        for(int i=0; i<form.length;i++){
-            for(int j=0; j<form[i].length;j++){
-                if(form[i][j]){
-                    Delta nd = new Delta(i-ci,j-cj);
-                    deltalist.add(nd);
-                }
-            }
-        }
+        this.leader = leader;
+        deltalist = generateDeltaList(form);
         this.ants = new ArrayList<Ant>(lants.subList(0, deltalist.size()));
     }
 
+    protected Tile leader;
+    
     @Override
     public boolean execute() {
-        Logger.log("Build a formation at "+goal);
-        //first, get the walking distances of the ants to the goal
+        Logger.log("Build a formation at "+leader);
+        //first, get the walking distances of the ants to the leader
         Logger.log("Looking for paths for ants "+ants.size());
         Logger.log("Spots for deltas "+deltalist.size());
         if(ants.size()!=deltalist.size()){
@@ -64,7 +57,7 @@ public class Formation extends Plan{
         }
         ArrayList<IntAntPath> list = new ArrayList<IntAntPath>();
         for(Ant ant:ants){
-            Path p = ant.getTile().shortestPath(goal);
+            Path p = ant.getTile().shortestPath(leader);
             if(p==null){
                 cancel();
                 return false;
@@ -76,7 +69,7 @@ public class Formation extends Plan{
         for(IntAntPath iap:list){
             boolean found = false;
             for(Delta delta:deltalist){//ligt er een delta al op het pad
-                if(iap.path.contains(delta.from(goal))){
+                if(iap.path.contains(delta.from(leader))){
                     if(!deltaantmap.containsKey(delta)){
                         deltaantmap.put(delta,iap.ant);
                         antdeltamap.put(iap.ant,delta);
@@ -88,7 +81,7 @@ public class Formation extends Plan{
             if(found)continue;//doe verder met de volgende mier
             
             for(Delta delta:deltalist){//zoek anders de delta die het dichtst bij ligt
-                if(iap.path.contains(delta.from(goal))){
+                if(iap.path.contains(delta.from(leader))){
                     Delta minfreedelta = null;
                     int dist = Integer.MAX_VALUE;
                     for(Delta delta2:deltalist){
@@ -119,7 +112,8 @@ public class Formation extends Plan{
         Logger.log("issuing roads");
         for(Delta delta:deltaantmap.keySet()){
             Ant ant = deltaantmap.get(delta);
-            Path p = ant.getTile().shortestPath(delta.from(goal));
+            Logger.log("I want an ant at " + delta.from(leader));
+            Path p = ant.getTile().shortestPath(delta.from(leader));
             if(p==null){
                 cancel();
                 return false;
@@ -129,13 +123,24 @@ public class Formation extends Plan{
         Logger.log("Finished formation");
         return true;
     }
-    
-    protected void setStep(Aim aim) {
-        goal = goal.getTile(aim);
-        for(Ant ant:ants){
-            Path p = ant.getTile().shortestComplexPath(antdeltamap.get(ant).from(goal));
-            ant.setPath(p);
+
+    public Tile getTile() {
+        return leader;
+    }
+
+    private static ArrayList<Delta> generateDeltaList(boolean[][] form) {
+        ArrayList<Delta> deltas = new ArrayList<Delta>();
+        int ci = form.length/2;
+        int cj = form[ci].length/2;
+        for(int i=0; i<form.length;i++){
+            for(int j=0; j<form[i].length;j++){
+                if(form[i][j]){
+                    Delta nd = new Delta(i-ci,j-cj);
+                    deltas.add(nd);
+                }
+            }
         }
+        return deltas;
     }
     
     private class IntAntPath implements Comparable<IntAntPath>{
@@ -179,8 +184,7 @@ public class Formation extends Plan{
                 if(a.hasPath()){
                     busy = true;
                 }else{
-                    //TODO:probeer stil te staan totdat iedereen stilstaat
-                    a.setPath(a.getTile().shortestComplexPath(antdeltamap.get(a).from(goal)));                    
+                    a.setPath(a.getTile().shortestComplexPath(antdeltamap.get(a).from(leader)));                    
                 }
             }
             if(!busy){
@@ -193,7 +197,12 @@ public class Formation extends Plan{
         return true;
     }
     
-    private class Delta{
+    protected void moveToTile(Tile g) {
+        leader = g;
+        form();
+    }
+    
+    final private static class Delta{
         private int dc;
         private int dr;
         public Delta(int dr, int dc){
@@ -208,10 +217,53 @@ public class Formation extends Plan{
         }
     }
     
-    public boolean isPossible(Tile center){
-        for(Delta delta:deltalist){
+    public static boolean isPossible(Tile center, boolean[][] form){
+        ArrayList<Delta> deltas = generateDeltaList(form);
+        for(Delta delta:deltas){
             if(!GameData.isPassable(delta.from(center)))
                 return false;
+        }
+        return true;
+    }
+    public boolean isPossible(Tile t){
+        for(Delta delta:deltalist){
+            if(!GameData.isPassable(delta.from(t)))
+                return false;
+        }
+        return true;
+    }
+    public boolean isPossible(){
+        return isPossible(leader);
+    }
+    public boolean isFormed(){
+        for(Delta delta:deltalist){
+            if(!delta.from(leader).equals(deltaantmap.get(delta).getTile()))
+                return false;
+        }
+        return true;
+    }
+    
+    public boolean form(){
+        for(Ant ant:ants){
+            Tile antleader = antdeltamap.get(ant).from(leader);
+            //Logger.log("Ant at "+ant.getTile()+ " has a path?"+ant.hasPath());
+            if(ant.hasPath()){
+                if(!ant.getPath().getLastTile().equals(antleader)){
+                    Path p = ant.getTile().shortestComplexPath(antleader);
+                    if(p==null){
+                        return false;
+                    }
+                    ant.setPath(p);
+                }
+            }else{
+                if(!ant.getTile().equals(antleader)){
+                    Path p = ant.getTile().shortestComplexPath(antleader);
+                    if(p==null){
+                        return false;
+                    }
+                    ant.setPath(p);
+                }
+            }
         }
         return true;
     }

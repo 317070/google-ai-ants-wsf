@@ -11,25 +11,37 @@ import java.util.List;
  */
 public class HunterFormation extends Formation{
     
-    Path p = null;
-    
-    public HunterFormation(List<Ant> lants, boolean[][] form, Tile goal){
-        super(lants, form, goal);
+    public HunterFormation(List<Ant> lants, boolean[][] form, Tile leader){
+        super(lants, form, leader);
     }
     
     @Override
     public boolean update() {
         if(super.update()){
-            ArrayList<Tile> enemy = GameData.getEnemyAnts();
-            if(enemy.isEmpty())return true;
-            Collections.sort(enemy, new Comparator<Tile>(){
-                public int compare(Tile t1, Tile t2) {
-                    return t1.getManhattenDistanceTo(goal) - t2.getManhattenDistanceTo(goal);
+            if(!isFormed() && isPossible()){
+                form();
+            }else{
+                ArrayList<EnemyAnt> enemy = GameData.getEnemyAnts();
+                if(enemy.isEmpty())return true;
+                Collections.sort(enemy, new Comparator<EnemyAnt>(){
+                    public int compare(EnemyAnt t1, EnemyAnt t2) {
+                        return t1.getTile().getManhattenDistanceTo(leader) - t2.getTile().getManhattenDistanceTo(leader);
+                    }
+                });
+                Path p = leader.shortestPath(enemy.get(0).getTile());
+                if(p==null){
+                    return true;
                 }
-            });
-            Path p = goal.shortestPath(enemy.get(0));
-            this.setStep(p.getNextAim());
-            return true;
+                for(Tile t:p.getTiles()){
+                    if(t.equals(leader))continue;
+                    if(isPossible(t)){
+                        this.moveToTile(t);//ga naar de eerste mogelijke tile
+                        return true;
+                    }
+                }
+                this.moveToTile(leader.getTile(p.getNextAim()));
+                return true;
+            }
         }
         return false;
     }
