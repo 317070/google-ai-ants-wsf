@@ -27,7 +27,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
     }
 
     @SuppressWarnings("rawtypes")
-    private static final Pattern compilePattern(Class<? extends Enum> clazz) {
+    private static Pattern compilePattern(Class<? extends Enum> clazz) {
         StringBuilder builder = new StringBuilder("(");
         for (Enum enumConstant : clazz.getEnumConstants()) {
             if (enumConstant.ordinal() > 0) {
@@ -151,7 +151,10 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
                     addWater(row, col);
                     break;
                 case A:
-                    addAnt(row, col, scanner.nextInt());
+                    // avoid crashing if the engine sends None as player ID
+                    if (scanner.hasNextInt()) {
+                        addAnt(row, col, scanner.nextInt());
+                    }
                     break;
                 case F:
                     addFood(row, col);
@@ -161,9 +164,6 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
                     if (scanner.hasNextInt()) {
                         removeAnt(row, col, scanner.nextInt());
                     }
-                    break;
-                case R:
-                    removeFood(row, col);
                     break;
             }
         }

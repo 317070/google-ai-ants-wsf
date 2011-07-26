@@ -1,7 +1,6 @@
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * Gemaakt voor de WSF-deelname aan de google-AI contest
@@ -43,7 +42,11 @@ public class GameData {
         for(Tile enemy:enemyants){
             world.set(enemy, Ilk.LAND);//don't remember these, they don't get updated by the engine
         }
+        for(Tile food:foodtiles){
+            world.set(food, Ilk.LAND);//don't remember these, they don't get updated by the engine
+        }
         enemyants.clear();
+        foodtiles.clear();
         
     }
     /**
@@ -122,21 +125,11 @@ public class GameData {
         foodtiles.remove(tile);
     }
 
-    static List<Ant> getMyAnts() {
+    static ArrayList<Ant> getMyAnts() {
         return new ArrayList<Ant>(myants);
     }
-
-    static List<Ant> getMyBusyAnts(){
-        ArrayList<Ant> result = new ArrayList<Ant>();
-        for(Ant a:myants){
-            if(!a.isBusy()){
-                result.add(a);
-            }
-        }
-        return result;
-    }
     
-    static List<Tile> getEnemyAnts() {
+    static ArrayList<Tile> getEnemyAnts() {
         return new ArrayList<Tile>(enemyants);
     }
 
@@ -157,7 +150,7 @@ public class GameData {
     }
     
     static boolean isPassableOnTurn(Tile tile, int turn) {
-        return isPassable(tile) && (null == GameData.isThereAnAntThereOnThisTurn(tile, GameData.currentturn()+1));
+        return isPassable(tile) && (null == GameData.isThereAnAntThereOnThisTurn(tile, turn));
     }
     
     static boolean isVisible(Tile goal) {
@@ -176,54 +169,46 @@ public class GameData {
     }
     
     static void reservePath(Ant a, Path p){
-        Path copy = new Path(p);
+        //Logger.log("Reserving a path with "+p.length()+" tiles");
         int turn = currentturn;
-        while(copy.hasSteps()){
-            Tile step = copy.getCurrentTile();
-            while(plannedfuture.size()<=turn){
-                plannedfuture.add(new Map<Ant>());
+        for(Tile step:p.getTiles()){
+            if(currentturn!=turn){//Tile waarop je nu staat moet je niet reserveren, die is al gereserveerd
+                while(plannedfuture.size()<=turn){
+                    plannedfuture.add(new Map<Ant>());
+                }
+                //Logger.log("reserving a tile:"+step +" on turn "+turn);
+                Ant oldval = plannedfuture.get(turn).set(step, a);
+                if(oldval != null){
+                    throw new RuntimeException("Reserving a tile which is already reserved:"+step +" on turn "+turn);
+                }
             }
-            Ant oldval = plannedfuture.get(turn).set(step, a);
-            if(oldval != null){
-                throw new RuntimeException("Reserving a tile which is already reserved:"+oldval);
-            }
-            copy = copy.pop();
             turn++;
         }
-        Tile step = copy.getCurrentTile();
-        while(plannedfuture.size()<=turn){
-            plannedfuture.add(new Map<Ant>());
-        }
-        Ant oldval = plannedfuture.get(turn).set(step, a);
-        if(oldval != null){
-            throw new RuntimeException("Reserving a tile which is already reserved:"+oldval);
-        }
-        copy = copy.pop();
     }
     
-    static void cancelPath(Ant a, Path p){
-        Path copy = new Path(p);
+    static void cancelPath(Path p){
+        //Logger.log("Cancelling a path with "+p.length()+" tiles");
         int turn = currentturn;
-        while(copy.hasSteps()){
-            Tile step = copy.getCurrentTile();
-            plannedfuture.get(turn).set(step, null);
-            copy = copy.pop();
+        for(Tile step:p.getTiles()){
+            /*while(plannedfuture.size()<=turn){
+                plannedfuture.add(new Map<Ant>());
+            }*/
+            if(currentturn!=turn){//Tile waarop je nu staat moet je niet annuleren, die blijft gereserveerd
+                //Logger.log("cancelling a tile:"+step +" on turn "+turn);
+                plannedfuture.get(turn).set(step, null);
+            }
             turn++;
         }
-        Tile step = copy.getCurrentTile();
-        plannedfuture.get(turn).set(step, null);
-        copy = copy.pop();
     }
     
     //kijk of het pad nog steeds bewandelbaar is, dit kan veranderd zijn doordat we nu meer tiles zien.
     //houdt geen rekening met reservaties!
     static boolean isThisPathStillPassable(Path path){
-        Path copy = new Path(path);
-        while(copy.hasSteps()){
-            if(!isPassable(copy.getCurrentTile())){
+        if(path==null)return true;
+        for(Tile step:path.getTiles()){
+            if(!isPassable(step)){
                 return false;
             }
-            copy = copy.pop();
         }
         return true;
     }

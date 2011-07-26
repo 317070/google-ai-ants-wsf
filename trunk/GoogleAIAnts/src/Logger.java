@@ -39,6 +39,7 @@ class Logger {
             res += "]=";
             res += str + "\n";
             out.write(res);
+            flush();
         } catch (IOException e) {
         }
     }
@@ -51,6 +52,7 @@ class Logger {
         PrintWriter printWriter = new PrintWriter(result);
         e.printStackTrace(printWriter);
         log(result.toString());
+        flush();
     }
     
     static void close() {

@@ -21,14 +21,16 @@ public class FoodPlan extends Plan{
     }
     
     @Override
-    public void update(){
+    public boolean update(){
         if(ants.get(0).isDead()){
             this.ants.remove(0);
             cancel();
-            return;
+            return false;
         }
-        if( ants.get(0).getTile().equals(goal)){
+        if( !ants.get(0).hasPath()){
+            Logger.log("foodplan finished with goal "+goal);
             finish();
+            return true;
         }
         if(! GameData.isThisPathStillPassable(ants.get(0).getPath())){
             Path p = ants.get(0).getTile().shortestPath(goal);
@@ -37,5 +39,6 @@ public class FoodPlan extends Plan{
             }
             ants.get(0).setPath(p);
         }
+        return false;
     }
 }

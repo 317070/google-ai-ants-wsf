@@ -206,6 +206,10 @@ public class Tile {
         if(goals.isEmpty()){//die tile is niet bereikbaar want ze is omringd door water
             return null;
         }
+        if(goals.contains(this) && GameData.isPassableOnTurn(this, GameData.currentturn()+1)){
+            p = p.push(this);//sta stil
+            return p;
+        }
         ArrayList<IntPath> memory = new ArrayList<IntPath>();
         HashSet<Tile> beenthere = new HashSet<Tile>();
         beenthere.add(this);
@@ -237,9 +241,82 @@ public class Tile {
                 beenthere.add(b);
             }
         }
-            
-        
     }
+    
+    //A* implementatie
+    //geeft het heuristisch kortste pad terug van deze tile naar een andere tile.
+    //Als die andere tile passable is, eindigt het pad op die andere tile.
+    //Als die andere tile niet-passable is, eindigt het pad naast die andere tile.
+    //Deze kan verschillende keren over dezelfde tile passeren en kan stilstaan
+    //Hij is dus geschikt voor beweging in complexe groepen
+    
+    //waarschuwing: overflow als er geen enkel pad bestaat! Dit is voorlopig onmogelijk.
+    
+    //Indien geen zo'n pad bestaat, return null
+    Path shortestComplexPath(Tile to) {
+        Path p = new Path(this);//vertek van deze node
+        ArrayList<Tile> goals = new ArrayList<Tile>();
+        if(GameData.isPassable(to)){
+            goals.add(to);
+        }else{
+            goals.addAll(to.getPassableBorderingTiles());
+        }
+        if(goals.isEmpty()){//die tile is niet bereikbaar want ze is omringd door water
+            return null;
+        }
+        //TODO: build connectivity map
+        if(this.shortestPath(to) == null)return null; // er bestaat geen pad!
+        
+        ArrayList<IntPath> memory = new ArrayList<IntPath>();
+        HashSet<IntTile> beenthere = new HashSet<IntTile>();
+        beenthere.add(new IntTile(this, GameData.currentturn()));
+        IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn()+1);
+        memory.add(start);
+        while(true){
+            int turn = memory.get(0).nextturn;
+            Path shortest = memory.get(0).path;
+            memory.remove(0);
+            List<Tile> borders = shortest.getLastTile().getPassableBorderingTilesOnTurn(turn);
+            if(GameData.isPassableOnTurn(shortest.getLastTile(), turn)){
+                borders.add(shortest.getLastTile());
+            }
+            for(IntTile it:beenthere){
+                if(it.turn==turn){
+                    borders.remove(it.tile);
+                }
+            }
+            Collections.shuffle(borders);
+            for(Tile b:borders){
+                Path newpath = shortest.push(b);
+                if(goals.contains(b)){
+                    //Logger.log( "memory:"+memory.size());
+                    return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
+                }
+                int estimatedtotaldistance = newpath.getDistance() + b.getManhattenDistanceTo(to);
+                IntPath ip = new IntPath(estimatedtotaldistance, newpath, turn+1);
+                int insert = Collections.binarySearch(memory, ip);
+                if(insert<0){
+                    insert = -insert-1;
+                }
+                memory.add(insert, ip);
+                beenthere.add(new IntTile(b, turn));
+            }
+        }
+    }
+    
+    private class IntTile implements Comparable<IntTile> {
+        int turn;
+        Tile tile;
+        IntTile(Tile t, int turn){
+            this.turn=turn;
+            this.tile = t;
+        }
+        @Override
+        public int compareTo(IntTile ip) {
+            return this.turn - ip.turn;
+        }
+    }
+    
     private class IntPath implements Comparable<IntPath> {
         int dist;
         Path path;
@@ -290,9 +367,9 @@ public class Tile {
         return (this.row==t.row)&&(this.col == t.col);
     }
     
-    public Tile randomTile(){
-        int row = (int)  (Math.random()*GameParam.rows);
-        int col = (int)  (Math.random()*GameParam.cols);
-        return new Tile(row,col);
+    public static Tile randomTile(){
+        int mrow = (int)  (Math.random()*GameParam.rows);
+        int mcol = (int)  (Math.random()*GameParam.cols);
+        return new Tile(mrow,mcol);
     }
 }

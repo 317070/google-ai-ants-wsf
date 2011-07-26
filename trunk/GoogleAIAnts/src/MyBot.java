@@ -1,5 +1,8 @@
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,11 +23,12 @@ public class MyBot extends Bot {
         try {
             Logger.log("start");
             new MyBot().readSystemInput();
-        } catch (Exception e) {
+        }catch (Exception e) {
             Logger.log(e);
+        }finally{
+            Logger.log("ties gedaan");
+            Logger.close();
         }
-        Logger.log("ties gedaan");
-        Logger.close();
     }
 
     /**
@@ -44,15 +48,13 @@ public class MyBot extends Bot {
         int length = 0;
         HashMap<Ant,List<Tile>> missions = new HashMap<Ant,List<Tile>>();
         HashSet<Tile> checked = new HashSet<Tile>();
-        
-        
-        for (Ant myAnt : GameData.getMyBusyAnts()) {
+        for (Ant myAnt : PlanManager.getAvailableAnts()) {
             List<Tile> goals = myAnt.getTile().getTilesUnderAWalkingDistance(10);
             length = goals.size(); // zijn toch allemaal even groot
             missions.put(myAnt, goals);
         }
         for (int i = 0; i<length; i++){
-            for (Ant myAnt : GameData.getMyBusyAnts()){
+            for (Ant myAnt : PlanManager.getAvailableAnts()){
                 Tile goal = missions.get(myAnt).get(i);
                 if(checked.contains(goal))continue;//check every tile only once
                 checked.add(goal);
@@ -67,26 +69,43 @@ public class MyBot extends Bot {
                         plan.execute();
                     }
                 }else if(ilk==Ilk.ENEMY_ANT && GameData.isVisible(goal)){
-                    if(!PlanManager.hasGoal(goal)){
-                        Plan plan = new AttackPlan(myAnt,goal);
-                        PlanManager.addPlan(plan);
-                        plan.execute();
-                    }else{
-                        Plan plan = PlanManager.getPlan(goal);
-                        if(plan instanceof AttackPlan){
-                            AttackPlan att = (AttackPlan) plan;
-                            att.addAnt(myAnt);
+                    if(PlanManager.getAvailableAnts().size()>50 && GameData.currentturn()>150){
+                        if(!PlanManager.hasGoal(goal)){
+                            Plan plan = new AttackPlan(myAnt,goal);
+                            PlanManager.addPlan(plan);
+                            plan.execute();
                         }else{
-                            Logger.log("(Mybot) This is a wrong kind of plan:"+plan);
+                            Plan plan = PlanManager.getPlan(goal);
+                            if(plan instanceof AttackPlan){
+                                AttackPlan att = (AttackPlan) plan;
+                                att.addAnt(myAnt);
+                            }else{
+                                Logger.log("(Mybot) This is a wrong kind of plan:"+plan);
+                            }
                         }
                     }
-                    
                 }                
             }
         }
         //nothing? Go explore
-        for (Ant myAnt : GameData.getMyAnts()) {
-            if(myAnt.getPath().hasSteps())continue;//hij is al bezig
+        /*ArrayList<Ant> freeants = PlanManager.getAvailableAnts();
+        while(freeants.size()>=20){
+            Tile goal = freeants.get(0).getTile();
+            boolean[][] form = Formation.SMALLSQUARE;
+            final Tile fgoal = goal;
+            
+            Collections.sort(freeants,new Comparator<Ant>(){
+                public int compare(Ant a1, Ant a2) {
+                    return a1.getTile().getManhattenDistanceTo(fgoal) - a2.getTile().getManhattenDistanceTo(fgoal);
+                }
+            });
+            
+            HunterFormation plan = new HunterFormation(freeants,form,goal);
+            PlanManager.addPlan(plan);
+            plan.execute();
+            freeants = PlanManager.getAvailableAnts();
+        }*/
+        for (Ant myAnt : PlanManager.getAvailableAnts()) {
             myAnt.fleeFromFriends();
         }
         Logger.log("");
