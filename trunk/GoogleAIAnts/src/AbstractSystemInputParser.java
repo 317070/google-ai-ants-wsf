@@ -233,9 +233,8 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * Finishes turn.
      */
     public void finishTurn() {
-        for(Ant ant:GameData.getMyAnts()){
-            ant.update();
-        }
+        Ant.checkAllMyAntsForPaths();
+        Ant.updateAllMyAnts();
         OrderManager.issueAllOrders();
     }
 

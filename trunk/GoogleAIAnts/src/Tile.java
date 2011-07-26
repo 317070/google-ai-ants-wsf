@@ -10,7 +10,7 @@ import java.util.List;
  * 
  * IMMUTABLE!
  */
-public class Tile {
+public class Tile  implements HasTile{
 
     private final int row;
     private final int col;
@@ -35,6 +35,7 @@ public class Tile {
     }
     
     Tile getTile(Aim aim){
+        if(aim==null)return this;
         int mrow = this.row + aim.getRowDelta();
         int mcol = this.col + aim.getColDelta();
         return new Tile(mrow,mcol);
@@ -259,13 +260,15 @@ public class Tile {
         if(GameData.isPassable(to)){
             goals.add(to);
         }else{
-            goals.addAll(to.getPassableBorderingTiles());
-        }
-        if(goals.isEmpty()){//die tile is niet bereikbaar want ze is omringd door water
+            Logger.log("doel niet bereikbaar");
             return null;
         }
+        if(goals.contains(this) && GameData.isPassableOnTurn(this, GameData.currentturn()+1)){
+            Logger.log("sta stil");
+            p = p.push(this);//sta stil
+            return p;
+        }
         //TODO: build connectivity map
-        if(this.shortestPath(to) == null)return null; // er bestaat geen pad!
         
         ArrayList<IntPath> memory = new ArrayList<IntPath>();
         HashSet<IntTile> beenthere = new HashSet<IntTile>();
@@ -273,6 +276,10 @@ public class Tile {
         IntPath start = new IntPath(this.getManhattenDistanceTo(to), p, GameData.currentturn()+1);
         memory.add(start);
         while(true){
+            if(memory.isEmpty()){//geen enkel mogelijk pad, zelfs niet stilstaan...
+                Logger.log("Ik vind geen enkel mogelijk complex pad");
+                return null;
+            }
             int turn = memory.get(0).nextturn;
             Path shortest = memory.get(0).path;
             memory.remove(0);
@@ -290,6 +297,7 @@ public class Tile {
                 Path newpath = shortest.push(b);
                 if(goals.contains(b)){
                     //Logger.log( "memory:"+memory.size());
+                    Logger.log("Doel bereikt");
                     return newpath; //de eerste keer dat we uitkomen, hebben we bij benadering het beste pad
                 }
                 int estimatedtotaldistance = newpath.getDistance() + b.getManhattenDistanceTo(to);
@@ -302,6 +310,10 @@ public class Tile {
                 beenthere.add(new IntTile(b, turn));
             }
         }
+    }
+
+    public Tile getTile() {
+        return this;
     }
     
     private class IntTile implements Comparable<IntTile> {

@@ -88,7 +88,7 @@ public class MyBot extends Bot {
             }
         }
         //nothing? Go explore
-        /*ArrayList<Ant> freeants = PlanManager.getAvailableAnts();
+        ArrayList<Ant> freeants = PlanManager.getAvailableAnts();
         while(freeants.size()>=20){
             Tile goal = freeants.get(0).getTile();
             boolean[][] form = Formation.SMALLSQUARE;
@@ -100,13 +100,23 @@ public class MyBot extends Bot {
                 }
             });
             
-            HunterFormation plan = new HunterFormation(freeants,form,goal);
-            PlanManager.addPlan(plan);
-            plan.execute();
-            freeants = PlanManager.getAvailableAnts();
-        }*/
+            
+            if(Formation.isPossible(goal,form)){
+                HunterFormation plan = new HunterFormation(freeants,form,goal);
+                PlanManager.addPlan(plan);
+                plan.execute();
+                freeants = new ArrayList<Ant>(freeants.subList(4, freeants.size()-1));
+            }else{
+                freeants.remove(0);
+            }
+        }
+        ArrayList<HasTile> creeps = new ArrayList<HasTile>(GameData.getMyAnts());
+        if(PlanManager.getAvailableAnts().size()<50 || GameData.currentturn()<75){
+            creeps.addAll(GameData.getEnemyAnts());
+        }
+        
         for (Ant myAnt : PlanManager.getAvailableAnts()) {
-            myAnt.fleeFromFriends();
+            myAnt.fleeFrom(creeps);
         }
         Logger.log("");
         Logger.log(" Result:");
