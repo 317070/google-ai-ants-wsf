@@ -1,0 +1,1 @@
+This is a bot for the Google AI challenge spring 2011, by the wetenschapsforum.nl team.
